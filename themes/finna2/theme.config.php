@@ -228,6 +228,8 @@ return [
         'vendor/priority-nav.min.js',
         'vendor/leaflet.min.js',
         'vendor/leaflet.draw.min.js',
+        'vendor/three.js',
+        'vendor/voyager-explorer.dev.js'
     ],
     'less' => [
         'active' => false
