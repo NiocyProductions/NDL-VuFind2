@@ -272,7 +272,7 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
     public function getMyProfile($patron)
     {
         $this->debug("getMyProfile called");
-
+    
         $username = $patron['cat_username'];
         $cacheKey = $this->getPatronCacheKey($username);
         $profile = $this->getCachedData($cacheKey);

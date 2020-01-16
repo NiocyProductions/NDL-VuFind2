@@ -149,9 +149,12 @@ return [
         'vendor/video-js.min.css',
         'finna.css',
         'vendor/priority-nav-core.css',
-        'finna-flex-fallback.css::lt IE 10', // flex polyfill
+        'finna-flex-fallback.css::lt IE 10' // flex polyfill
     ],
     'js' => [
+        'vendor/three.min.js',
+        'vendor/GLTFLoader.js',
+        'vendor/OrbitControls.js',
         'vendor/event-stub.js:lt IE 9',
         'common.js',
         'advanced_search.js',
@@ -169,6 +172,7 @@ return [
         'finna-autocomplete.js',
         'finna-authority.js',
         'finna-combined-results.js',
+        'finna-model-viewer.js',
         'finna-video-popup.js',
         'finna-image-paginator.js',
         'finna-comments.js',

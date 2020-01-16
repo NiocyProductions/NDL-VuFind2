@@ -1,0 +1,25 @@
+<?php 
+    $options = [
+        'model' => '/vufind/themes/finna2/images/models/juomahinkka_test01.glb',
+        'thumbnail' => '/vufind/Cover/Show?id=museumplusria.testi&amp;index=0&amp;size=large'
+    ];
+?>
+<div class="viewer-tabs-wrapper">
+    <button class="viewer-tab-button" name="image-viewer-button" type="button">Images</button>
+    <button class="viewer-tab-button" name="model-viewer-button" type="button">Viewer</button>
+</div>
+
+<!-- Code for debugging purposes -->
+<script>
+    $(document).ready(function setButtons() {
+        $('.viewer-tabs-wrapper button[name="image-viewer-button"]').on('click', function () {
+            $('.image-information').show();
+            $('.3d-wrapper').hide();
+        });
+        $('.viewer-tabs-wrapper button[name="model-viewer-button"]').on('click', function () {
+            $('.image-information').hide();
+            $('.3d-wrapper').show();
+            finna.modelViewer.create('3d-canvas-wrapper', <?=json_encode($options)?>);
+        });
+    });
+</script>

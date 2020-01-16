@@ -2,6 +2,7 @@
 <?php
   $isList = ($type === 'list' || $type === 'list grid');
   $enableImageZoom = (isset($enableImagePopupZoom) && $enableImagePopupZoom) && in_array($this->driver->tryMethod('getRecordType'), ['lido', 'forward', 'ead', 'qdc']);
+  $models = [];
 ?>
 <?php if ($type === 'record' || !$this->userAgent()->isBot()): ?>
   <?php
@@ -73,12 +74,13 @@
         'maxRows' => 3,
         'iconlabelClass' => "format-" . $this->record($this->driver)->getFormatClass(end($formats)),
         'isList' => $type === 'list' || $type === 'list grid'
-      ]?>
+      ];?>
       finna.imagePaginator.initPaginator(
         <?= json_encode($paginatedLinks) ?>,
         <?= json_encode($settings) ?>
       );
     </script>
   <?php endif; ?>
+
 <?php endif;?>
 <!-- END of: finna - RecordDriver/DefaultRecord/record-image-paginator.phtml -->
