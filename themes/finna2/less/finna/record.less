@@ -194,6 +194,58 @@ a.authority {
     .model-viewer-container {
       max-width: 700px;
     }
+    .model-wrapper {
+      background-color: white;
+      .viewer-controls {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin-top: 4px;
+        margin-right: 4px;
+        .viewer-btn {
+          appearance: none;
+          -webkit-appearance: none;
+          border: none;
+          padding: 5px;
+        }
+      }
+      .model-canvas-wrapper {
+
+      }
+      .model-information {
+        .model-header {
+          color: white;
+          display: flex;
+          background-color: @brand-primary;
+          p {
+            font-size: 18px;
+            margin: 4px;
+          }
+        }
+        th {
+          padding-left: 4px;
+        }
+      }
+      &.fullscreen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10000;
+        .model-information {
+          max-width: 500px;
+          background-color: white;
+          position: absolute;
+          bottom: 0;
+          margin: 4px;
+          table {
+            margin-bottom: 0;
+          }
+          th, td {
+            width: 50%;
+          }
+        }
+      }
+    }
   }
   .video-link-container {
     width: 100%;

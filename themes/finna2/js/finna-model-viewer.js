@@ -5,10 +5,70 @@ finna.modelViewer = (function modelViewer() {
   function ModelViewer(canvasParent, options)
   {
     var _ = this;
+
+    _.informations = {};
     _.thumbnail = options.thumbnail;
     _.canvasParent = $('.' + canvasParent);
-    _.createImageTrigger();
+    _.root = _.canvasParent.closest('.model-wrapper');
+    _.controlsArea = _.root.find('.viewer-controls');
+    _.controlsArea.toggle(false);
+    _.fullscreen = _.controlsArea.find('.model-fullscreen');
+    _.wireframeBtn = _.controlsArea.find('.model-wireframe');
+    _.informationsArea = _.root.find('.model-information');
+    _.informationsArea.toggle(false);
+    _.modelPath = options.model;
+    _.setImageTrigger();
+    _.setEvents();
   }
+
+  ModelViewer.prototype.setInformation = function setInformation(element, info)
+  {
+    var _ = this;
+
+    _.informationsArea.find('.' + element).html(info);
+  };
+
+  ModelViewer.prototype.setEvents = function setEvents()
+  {
+    var _ = this;
+    $(window).on('resize', function setNewScale() {
+      if (typeof _.camera === 'undefined') {
+        return;
+      }
+      _.updateScale();
+    });
+    _.fullscreen.on('click', function setFullscreen() {
+      if (_.root.hasClass('fullscreen')) {
+        _.root.removeClass('fullscreen');
+        _.root.css({
+          'width': '',
+          'height': '',
+        });
+      } else {
+        _.root.addClass('fullscreen');
+        _.root.css({
+          'width': $(window).width() + "px",
+          'height': $(window).height() + "px"
+        });
+      }
+
+      _.updateScale();
+    });
+    _.wireframeBtn.on('click', function toggleWireFrame() {
+      console.log(_.meshMaterial.wireframe);
+      _.meshMaterial.wireframe = !_.meshMaterial.wireframe;
+    });
+  };
+
+  ModelViewer.prototype.updateScale = function updateScale()
+  {
+    var _ = this;
+
+    _.getParentSize();
+    _.camera.aspect = _.size.x / _.size.y;
+    _.camera.updateProjectionMatrix();
+    _.renderer.setSize(_.size.x, _.size.y);
+  };
 
   ModelViewer.prototype.initViewer = function initViewer()
   {
@@ -25,23 +85,30 @@ finna.modelViewer = (function modelViewer() {
   };
 
   // image trigger is a placeholder for nonloaded viewers
-  ModelViewer.prototype.createImageTrigger = function createImageTrigger()
+  ModelViewer.prototype.setImageTrigger = function setImageTrigger()
   {
     var _ = this;
-    var img = $('<img>');
-    img.attr('src', _.thumbnail);
-
-    _.canvasParent.append(img);
-    _.canvasParent.on('click', function init() {
-      _.canvasParent.off('click');
-      _.canvasParent.empty();
+    _.canvasParent.find('img').on('click', function init() {
+      $(this).off('click');
+      $(this).remove();
       _.initViewer();
+      _.controlsArea.toggle(true);
     });
+  };
+
+  ModelViewer.prototype.getParentSize = function getParentSize()
+  {
+    var _ = this;
+    _.size = {
+      x: _.root.width(),
+      y: _.root.hasClass('fullscreen') ? _.root.height() : _.root.width()
+    };
   };
 
   ModelViewer.prototype.createRenderer = function createRenderer()
   {
     var _ = this;
+    _.getParentSize();
     _.renderer = new THREE.WebGLRenderer({
       antialias: true
     });
@@ -51,23 +118,17 @@ finna.modelViewer = (function modelViewer() {
     _.renderer.outputEncoding = _.encoding = THREE.sRGBEncoding;
     _.renderer.setClearColor(0xcccccc);
     _.renderer.setPixelRatio(window.devicePixelRatio);
-    _.renderer.setSize(600, 600);
+    _.renderer.setSize(_.size.x, _.size.x);
     _.canvasParent.append(_.renderer.domElement);    
   };
 
-  ModelViewer.prototype.loadGLTF = function loadGLTF(pathToFile)
+  ModelViewer.prototype.loadGLTF = function loadGLTF()
   {
     var _ = this;
-    var path;
-    if (typeof pathToFile === 'undefined') { // For debugging only
-      path = '/vufind/themes/finna2/images/models/juomahinkka_test01.glb';
-    } else {
-      path = pathToFile;
-    }
 
     var loader = new THREE.GLTFLoader();
     loader.load(
-      path,
+      _.modelPath,
       function onLoad ( obj ) {
         _.scene = obj.scene;
         _.scene.background = _.envMap;
@@ -76,7 +137,7 @@ finna.modelViewer = (function modelViewer() {
         _.setupScene();
       },
       function onLoading( xhr ) {
-
+        console.log(( xhr.loaded / xhr.total * 100 ) + '% loaded');
       },
       function onError( error ) {
 
@@ -109,7 +170,7 @@ finna.modelViewer = (function modelViewer() {
   ModelViewer.prototype.createControls = function createControls()
   {
     var _ = this;
-    _.camera = new THREE.PerspectiveCamera( 75, 400 / 400, 0.1, 1000 );
+    _.camera = new THREE.PerspectiveCamera( 75, _.size.x / _.size.x, 0.1, 1000 );
     _.camera.position.set(_.cameraPosition.x, _.cameraPosition.y, _.cameraPosition.z);
 
     _.controls = new THREE.OrbitControls(_.camera, _.renderer.domElement);
@@ -129,15 +190,28 @@ finna.modelViewer = (function modelViewer() {
         _.center = obj.localToWorld(_.center);
         _.cameraPosition.add(_.center);
 
-        // Reduce metalness to 0 and set cubemap as source to calculate lights
-        obj.material.envMap = _.envMap;
-        obj.material.metalness = 0;
-        obj.material.roughness = 1;
-        obj.material.depthWrite = !obj.material.transparent;
+        _.meshMaterial = obj.material;
 
-        if (obj.material.map) obj.material.map.encoding = _.encoding;
-        if (obj.material.emissiveMap) obj.material.emissiveMap.encoding = _.encoding;
-        if (obj.material.map || obj.material.emissiveMap) obj.material.needsUpdate = true;
+        // Reduce metalness to 0 and set cubemap as source to calculate lights
+        _.meshMaterial.envMap = _.envMap;
+        _.meshMaterial.metalness = 0;
+        _.meshMaterial.roughness = 1;
+        _.meshMaterial.depthWrite = !_.meshMaterial.transparent;
+
+        if (_.meshMaterial.map) _.meshMaterial.map.encoding = _.encoding;
+        if (_.meshMaterial.emissiveMap) _.meshMaterial.emissiveMap.encoding = _.encoding;
+        if (_.meshMaterial.map || _.meshMaterial.emissiveMap) _.meshMaterial.needsUpdate = true;
+
+        // Lets get available information about the model here so we can show them properly in information screen
+        var geo = obj.geometry;
+        if (typeof geo.isBufferGeometry !== 'undefined' && geo.isBufferGeometry) {
+          var vertices = geo.attributes.position.count;
+          _.setInformation('model-vertices', vertices);
+          var triangles = +geo.index.count / 3;
+          _.setInformation('model-triangles', triangles);
+          _.informationsArea.toggle(true);
+        }
+        console.log(obj);
       }
     });
   };
@@ -151,17 +225,12 @@ finna.modelViewer = (function modelViewer() {
     _.scene.add( directionalLight );
   };
 
-  ModelViewer.prototype.loadCubeMap = function loadCubeMap(pathToFolder)
+  ModelViewer.prototype.loadCubeMap = function loadCubeMap()
   {
     var _ = this;
-    var path;
-    if (typeof pathToFolder === 'undefined') { // For debugging only
-      path = '/vufind/themes/finna2/images/cubemap/';
-    } else {
-      path = pathToFolder;
-    }
+
     _.envMap = new THREE.CubeTextureLoader()
-      .setPath(path)
+      .setPath('/vufind/themes/finna2/images/cubemap/')
       .load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png']);
   };
 
