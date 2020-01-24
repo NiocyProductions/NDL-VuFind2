@@ -26,7 +26,7 @@
   $thumbnailAlignment = $this->record($this->driver)->getThumbnailAlignment('result');
   ob_start();
 ?>
-  <div class="media-<?=$thumbnailAlignment ?>">
+  <div class="media-<?=$thumbnailAlignment ?><?=!empty($audioUrls) ? ' audio' : ''?>">
 
     <?php
       // We need a tab controller here, so we can do stuff properly
@@ -98,6 +98,8 @@
               <?php endif; ?>
             </div>
           <?php endif; ?>
+
+          <?=$this->record($this->driver)->renderTemplate('versions-link.phtml')?>
         </div>
 
         <?php if ($summary): ?>
