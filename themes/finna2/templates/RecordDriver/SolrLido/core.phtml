@@ -22,6 +22,7 @@
       }
   }
 
+  $model = $this->driver->getModelData();
   $thumbnail = false;
   $thumbnailAlignment = $this->record($this->driver)->getThumbnailAlignment('result');
   ob_start();
@@ -31,11 +32,14 @@
     <?php
       // We need a tab controller here, so we can do stuff properly
     ?>
-    <?php $hasModel = true; if ($hasModel) :?>
+    <?php if ($model) :?>
       <?= $this->render('record/viewer-tabs.phtml'); ?>
     <?php endif; ?>
     <?=$this->record($this->driver)->renderTemplate('record-image-information.phtml', ['img' => $img, 'sizes' => ['small' => ['w' => 100, 'h' => 100], 'medium' => ['w' => 1200, 'h' => 1200]]]);?>
-    <?=$this->record($this->driver)->renderTemplate('model-viewer.phtml'); ?>
+
+    <?php if ($model) :?>
+      <?=$this->record($this->driver)->renderTemplate('model-viewer.phtml', ['model' => $model]); ?>
+    <?php endif; ?>
     <?php if (!empty($videoUrls)): ?>
       <?=$this->record($this->driver)->renderTemplate('record-video-player.phtml', ['videoUrls' => $videoUrls, 'type' => 'SolrLido']);?>
     <?php endif; ?>

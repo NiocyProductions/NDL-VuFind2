@@ -1,5 +1,5 @@
 <div class="viewer-tabs-wrapper">
-    <button class="viewer-tab-button" name="image-viewer-button" type="button">Images</button>
+    <button class="viewer-tab-button active" name="image-viewer-button" type="button">Images</button>
     <button class="viewer-tab-button" name="model-viewer-button" type="button">Viewer</button>
 </div>
 
@@ -7,13 +7,16 @@
 <script>
     $(document).ready(function setButtons() {
         $('.viewer-tabs-wrapper button[name="image-viewer-button"]').on('click', function () {
+            $(this).addClass('active');
+            $('button[name="model-viewer-button"]').removeClass('active');
             $('.image-information').show();
             $('.model-wrapper').hide();
         });
         $('.viewer-tabs-wrapper button[name="model-viewer-button"]').on('click', function () {
+            $(this).addClass('active');
+            $('button[name="image-viewer-button"]').removeClass('active');
             $('.image-information').hide();
             $('.model-wrapper').show();
-            console.log("pap");
         });
     });
 </script>

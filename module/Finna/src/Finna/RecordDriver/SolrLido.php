@@ -256,6 +256,7 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                     break;
                 case 'image_large':
                 case 'large':
+                case 'image_original';
                 case 'zoomview':
                     $size = 'large';
                     break;
@@ -301,6 +302,39 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
             ];
         }
         return $result;
+    }
+
+    /**
+     * Return required information about 3d-models from lido
+     * 
+     * @return boolean|array
+     */
+    public function getModelData()
+    {
+        $data = [];
+        foreach ($this->getSimpleXML()->xpath(
+            '/lidoWrap/lido/administrativeMetadata/'
+            . 'resourceWrap/resourceSet'
+        ) as $resourceSet) {
+            if (empty($resourceSet->resourceRepresentation)) {
+                continue;
+            }
+            foreach ($resourceSet->resourceRepresentation as $representation) {
+                switch (strtolower((string)$representation->attributes()->type)) {
+                case '3d_thumb':
+                    $data['preview_url'] = (string)$representation->linkResource;
+                    break;
+                case 'preview 3d':
+                    $data['preview_model'] = (string)$representation->linkResource;
+                    break;
+                case 'provided 3d':
+                    $data['large_model'] = (string)$representation->linkResource;
+                    break;
+                }
+            }
+        }
+
+        return empty($data) ? false : $data;
     }
 
     /**

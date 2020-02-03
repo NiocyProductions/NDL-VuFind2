@@ -38,7 +38,7 @@ use Interop\Container\ContainerInterface;
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development Wiki
  */
-class GetDescriptionFactory
+class GetModelFactory
     implements \Zend\ServiceManager\Factory\FactoryInterface
 {
     /**
@@ -68,7 +68,7 @@ class GetDescriptionFactory
             $container->get(\VuFind\Cache\Manager::class),
             $container->get(\VuFind\Config\PluginManager::class)->get('config'),
             $container->get(\VuFind\Record\Loader::class),
-            $container->get('ViewRenderer')
+            $container->get(\Zend\Router\Http\TreeRouteStack::class)
         );
         return $result;
     }

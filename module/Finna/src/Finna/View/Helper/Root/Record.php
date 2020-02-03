@@ -481,6 +481,19 @@ class Record extends \VuFind\View\Helper\Root\Record
     }
 
     /**
+     * Returns an image from the record with given key value data
+     * 
+     * @param string $key   wanted key to find
+     * @param string $value wanted value to find
+     * 
+     * @return string $url
+     */
+    public function getRecordImageWithAttribute($key, $value)
+    {
+
+    }
+
+    /**
      * Allow record image to be downloaded?
      * If record image is converted from PDF, downloading is allowed only
      * for configured record formats.

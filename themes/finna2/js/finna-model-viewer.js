@@ -6,17 +6,19 @@ finna.modelViewer = (function modelViewer() {
   {
     var _ = this;
 
+    _.id = options.id;
     _.informations = {};
     _.thumbnail = options.thumbnail;
     _.canvasParent = $('.' + canvasParent);
+    _.canvasImage = _.canvasParent.find('img');
     _.root = _.canvasParent.closest('.model-wrapper');
     _.controlsArea = _.root.find('.viewer-controls');
     _.controlsArea.toggle(false);
     _.fullscreen = _.controlsArea.find('.model-fullscreen');
+    _.viewerStateInfo = _.root.find('.viewer-state-info');
     _.wireframeBtn = _.controlsArea.find('.model-wireframe');
     _.informationsArea = _.root.find('.model-information');
     _.informationsArea.toggle(false);
-    _.modelPath = options.model;
     _.setImageTrigger();
     _.setEvents();
   }
@@ -24,7 +26,6 @@ finna.modelViewer = (function modelViewer() {
   ModelViewer.prototype.setInformation = function setInformation(element, info)
   {
     var _ = this;
-
     _.informationsArea.find('.' + element).html(info);
   };
 
@@ -37,25 +38,41 @@ finna.modelViewer = (function modelViewer() {
       }
       _.updateScale();
     });
-    _.fullscreen.on('click', function setFullscreen() {
+
+    $(document).on("fullscreenchange mozfullscreenchange webkitfullscreenchange", function onScreenChange() {
       if (_.root.hasClass('fullscreen')) {
         _.root.removeClass('fullscreen');
-        _.root.css({
-          'width': '',
-          'height': '',
-        });
       } else {
         _.root.addClass('fullscreen');
-        _.root.css({
-          'width': $(window).width() + "px",
-          'height': $(window).height() + "px"
-        });
       }
-
       _.updateScale();
     });
+
+    _.fullscreen.on('click', function setFullscreen() {
+      if (_.root.hasClass('fullscreen')) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { /* Firefox */
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE/Edge */
+          document.msExitFullscreen();
+        }
+      } else {
+        var elem = _.root[0];
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { /* Firefox */
+          elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE/Edge */
+          elem.msRequestFullscreen();
+        }
+      }
+    });
     _.wireframeBtn.on('click', function toggleWireFrame() {
-      console.log(_.meshMaterial.wireframe);
       _.meshMaterial.wireframe = !_.meshMaterial.wireframe;
     });
   };
@@ -88,12 +105,31 @@ finna.modelViewer = (function modelViewer() {
   ModelViewer.prototype.setImageTrigger = function setImageTrigger()
   {
     var _ = this;
-    _.canvasParent.find('img').on('click', function init() {
+    _.canvasImage.on('click', function init() {
       $(this).off('click');
-      $(this).remove();
-      _.initViewer();
-      _.controlsArea.toggle(true);
+      _.getModelUrl();
     });
+  };
+
+  ModelViewer.prototype.getModelUrl = function getModelUrl()
+  {
+    var _ = this;
+    $.getJSON(
+      VuFind.path + '/AJAX/JSON',
+      {
+        method: 'getModel',
+        id: _.id
+      }
+    )
+      .done(function onGetModelDone(response) {
+        _.modelPath = response.data.url;
+        _.canvasImage.remove();
+        _.initViewer();
+        _.controlsArea.toggle(true);
+      })
+      .fail(function onGetModelFailed(response) {
+        _.setImageTrigger();
+      });
   };
 
   ModelViewer.prototype.getParentSize = function getParentSize()
@@ -130,6 +166,7 @@ finna.modelViewer = (function modelViewer() {
     loader.load(
       _.modelPath,
       function onLoad ( obj ) {
+        _.viewerStateInfo.hide();
         _.scene = obj.scene;
         _.scene.background = _.envMap;
         _.center = new THREE.Vector3();
@@ -137,7 +174,7 @@ finna.modelViewer = (function modelViewer() {
         _.setupScene();
       },
       function onLoading( xhr ) {
-        console.log(( xhr.loaded / xhr.total * 100 ) + '% loaded');
+        _.viewerStateInfo.html(( xhr.loaded / xhr.total * 100 ).toFixed(2) + '%');
       },
       function onError( error ) {
 
@@ -198,7 +235,7 @@ finna.modelViewer = (function modelViewer() {
         _.meshMaterial.roughness = 1;
         _.meshMaterial.depthWrite = !_.meshMaterial.transparent;
 
-        if (_.meshMaterial.map) _.meshMaterial.map.encoding = _.encoding;
+        if (_.meshMaterial.map)_.meshMaterial.map.encoding = _.encoding;
         if (_.meshMaterial.emissiveMap) _.meshMaterial.emissiveMap.encoding = _.encoding;
         if (_.meshMaterial.map || _.meshMaterial.emissiveMap) _.meshMaterial.needsUpdate = true;
 
@@ -211,7 +248,6 @@ finna.modelViewer = (function modelViewer() {
           _.setInformation('model-triangles', triangles);
           _.informationsArea.toggle(true);
         }
-        console.log(obj);
       }
     });
   };

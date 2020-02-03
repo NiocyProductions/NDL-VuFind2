@@ -1,16 +1,15 @@
 <?php
-    $model = '/vufind/themes/finna2/images/models/juomahinkka_test01.glb';
-    $thumbnail = '/vufind/Cover/Show?id=museumplusria.testi&amp;index=0&amp;size=large';
     $options = [
-        'model' => '/vufind/themes/finna2/images/models/juomahinkka_test01.glb',
-        'thumbnail' => '/vufind/Cover/Show?id=museumplusria.testi&amp;index=0&amp;size=large'
+        'thumbnail' => $this->model['preview_url'],
+        'id' => $this->driver->getUniqueId()
     ];
 
     // We can load the model viewer related scripts here, so they are loaded only when needed
 ?>
 <div class="model-wrapper" style="display:none;width:100%;">
-    <div class="model-canvas-wrapper" style="position:relative;">
-        <img class="model-thumbnail" src="<?= $thumbnail?>" alt="thumbnail">
+    <div class="model-canvas-wrapper" style="position:relative;text-align:center;">
+        <img class="model-thumbnail" src="<?= $options['thumbnail']?>" alt="thumbnail">
+        <span class="viewer-state-info" style="position:absolute;top:50;">Katsele</span> 
         <div class="viewer-controls">
             <button class="viewer-btn model-fullscreen" type="button"><i class="fa fa-expand"></i> <span class="sr-only">Fullscreen</span></button>
             <button class="viewer-btn model-wireframe" type="button"><i class="fa fa-bars"></i> <span class="sr-only">Wireframe</span></button>

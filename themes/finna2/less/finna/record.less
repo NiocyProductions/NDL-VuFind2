@@ -211,8 +211,26 @@ a.authority {
     .model-viewer-container {
       max-width: 700px;
     }
+    .viewer-tabs-wrapper {
+      .viewer-tab-button {
+        appearance: none;
+        border: none;
+        background-color: white;
+        &.active {
+          border-top: 2px solid @brand-primary;
+          border-left: 1px solid lightgray;
+          border-right: 1px solid lightgray;
+          border-bottom: none;
+        }
+      }
+    }
     .model-wrapper {
       background-color: white;
+      min-height: 250px;
+      .model-thumbnail {
+        -webkit-filter: blur(2px); /* Safari 6.0 - 9.0 */
+        filter: blur(2px);
+      }
       .viewer-controls {
         position: absolute;
         top: 0;
@@ -227,7 +245,17 @@ a.authority {
         }
       }
       .model-canvas-wrapper {
-
+        .viewer-state-info {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          font-size: 24px;
+          background-color: @brand-primary;
+          color: white;
+          border-radius: 4px;
+          padding: 4px;
+          transform: translate(-50%, -50%);
+        }
       }
       .model-information {
         .model-header {
@@ -245,7 +273,6 @@ a.authority {
       }
       &.fullscreen {
         position: absolute;
-        top: 0;
         left: 0;
         z-index: 10000;
         .model-information {
