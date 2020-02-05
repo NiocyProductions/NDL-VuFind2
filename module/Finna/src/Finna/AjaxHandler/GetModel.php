@@ -9,6 +9,8 @@ use VuFind\Session\Settings as SessionSettings;
 use Zend\Config\Config;
 use Zend\Mvc\Controller\Plugin\Params;
 use Zend\View\Renderer\RendererInterface;
+use Zend\Http\Request;
+use Zend\View\Helper\ServerUrl;
 
 class GetModel extends \VuFind\AjaxHandler\AbstractBase
     implements \VuFindHttp\HttpServiceAwareInterface
@@ -37,18 +39,22 @@ class GetModel extends \VuFind\AjaxHandler\AbstractBase
     protected $urlHelper;
 
     protected $router;
+
+    protected $domainUrl;
     /**
      * Constructor
      */
     public function __construct(
         SessionSettings $ss, CacheManager $cm,
-        Config $config, Loader $loader, \Zend\Router\Http\TreeRouteStack $router
+        Config $config, Loader $loader, \Zend\Router\Http\TreeRouteStack $router,
+        string $domainUrl
     ) {
         $this->sessionSettings = $ss;
         $this->cacheManager = $cm;
         $this->config = $config;
         $this->recordLoader = $loader;
         $this->router = $router;
+        $this->domainUrl = $domainUrl;
     }
 
     /**
@@ -97,8 +103,10 @@ class GetModel extends \VuFind\AjaxHandler\AbstractBase
         }
         $route = $this->router->getBaseUrl();
         // We need to alter the url to point towards the cache file, now its just an absolute path
-        $url = "http://localhost/vufind/cache/$fileName";
+        // Url for public cache is located in domainurl/cache so lets point there, but
+        // For this demo we are going to 
+        $url = "{$this->domainUrl}{$route}/cache/$fileName";
 
-        return $this->formatResponse(['url' => $url, 'route' => $route]);
+        return $this->formatResponse(['url' => $url, 'route' => $url]);
     }
 }
