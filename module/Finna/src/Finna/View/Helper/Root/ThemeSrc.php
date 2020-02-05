@@ -41,6 +41,11 @@ namespace Finna\View\Helper\Root;
  */
 class ThemeSrc extends \Zend\View\Helper\AbstractHelper
 {
+    /**
+     * Theme information service
+     * 
+     * @var \VufindTheme\ThemeInfo
+     */
     protected $themeInfo;
 
     /**
@@ -54,7 +59,7 @@ class ThemeSrc extends \Zend\View\Helper\AbstractHelper
     }
 
     /**
-     * Check if file is found in the current theme.
+     * Returns filepath from current theme if found.
      *
      * @param string $relPath        File relative path
      * @param bool   $returnAbsolute Whether to return absolute file system path
@@ -73,6 +78,30 @@ class ThemeSrc extends \Zend\View\Helper\AbstractHelper
             }
             $urlHelper = $this->getView()->plugin('url');
             return $urlHelper('home') . 'themes/' . $currentTheme . '/' . $relPath;
+        }
+        return null;
+    }
+
+    /**
+     * Returns filepath from given theme if found
+     * 
+     * @param string $relPath        File relative path
+     * @param string $theme          Theme to search
+     * @param bool   $returnAbsolute Whether to return absolute file system path
+     *
+     * @return mixed
+     */
+    protected function fileFromTheme($relPath, $theme, $returnAbsolute = false)
+    {
+        $basePath = $this->themeInfo->getBaseDir();
+
+        $file = $basePath . '/' . $theme . '/' . $relPath;
+        if (file_exists($file)) {
+            if ($returnAbsolute) {
+                return $file;
+            }
+            $urlHelper = $this->getView()->plugin('url');
+            return $urlHelper('home') . 'themes/' . $theme . '/' . $relPath;
         }
         return null;
     }

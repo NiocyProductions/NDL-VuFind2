@@ -9,6 +9,7 @@ finna.modelViewer = (function modelViewer() {
     _.id = options.id;
     _.informations = {};
     _.thumbnail = options.thumbnail;
+    _.cubeSettings = options.cubemap;
     _.canvasParent = $('.' + canvasParent);
     _.canvasImage = _.canvasParent.find('img');
     _.root = _.canvasParent.closest('.model-wrapper');
@@ -266,8 +267,8 @@ finna.modelViewer = (function modelViewer() {
     var _ = this;
 
     _.envMap = new THREE.CubeTextureLoader()
-      .setPath('/vufind/themes/finna2/images/cubemap/')
-      .load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png']);
+      .setPath(_.cubeSettings.path)
+      .load(_.cubeSettings.images);
   };
 
   function create(area, options)

@@ -1,9 +1,15 @@
 <?php
     $options = [
         'thumbnail' => $this->model['preview_url'],
-        'id' => $this->driver->getUniqueId()
+        'id' => $this->driver->getUniqueId(),
+        'cubemap' => [
+            'path' => $this->imageSrc()->getImagesDirectoryPath(),
+            'images' => [
+                'px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'
+            ]
+        ]
     ];
-
+    var_dump($options);
     // We can load the model viewer related scripts here, so they are loaded only when needed
 ?>
 <div class="model-wrapper" style="display:none;width:100%;">
