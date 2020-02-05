@@ -101,12 +101,12 @@ class GetModel extends \VuFind\AjaxHandler\AbstractBase
                 return $this->formatResponse(['json' => ['status' => 'Error']]);
             }
         }
-        $route = $this->router->getBaseUrl();
+        $route = stripslashes($this->router->getBaseUrl());
         // We need to alter the url to point towards the cache file, now its just an absolute path
         // Url for public cache is located in domainurl/cache so lets point there, but
         // For this demo we are going to 
         $url = "{$this->domainUrl}{$route}/cache/$fileName";
 
-        return $this->formatResponse(['url' => $url, 'route' => $url]);
+        return $this->formatResponse(['url' => $url]);
     }
 }
