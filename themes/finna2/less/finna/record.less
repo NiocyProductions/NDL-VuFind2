@@ -226,19 +226,37 @@ a.authority {
         -webkit-filter: blur(2px); /* Safari 6.0 - 9.0 */
         filter: blur(2px);
       }
-      .viewer-controls {
+      .viewer-options {
         position: absolute;
         top: 0;
         right: 0;
         margin-top: 4px;
         margin-right: 4px;
+        width: 40%;
+        max-width: 400px;
+        .viewer-controls {
+          margin-bottom: 4px;
+          text-align: right;
+        }
         .viewer-btn {
           appearance: none;
           -webkit-appearance: none;
           border: none;
           padding: 5px;
+          background-color: black;
+          color: white;
+        }
+        .viewer-statistics {
+          table {
+            background-color: white;
+            margin-bottom: 0;
+          }
+          .viewer-btn {
+            width: 100%;
+          }
         }
       }
+
       .model-canvas-wrapper {
         .viewer-state-info {
           position: absolute;

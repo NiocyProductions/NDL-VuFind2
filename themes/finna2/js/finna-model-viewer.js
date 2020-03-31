@@ -14,11 +14,12 @@ finna.modelViewer = (function modelViewer() {
     _.canvasImage = _.canvasParent.find('img');
     _.root = _.canvasParent.closest('.model-wrapper');
     _.controlsArea = _.root.find('.viewer-controls');
-    _.controlsArea.toggle(false);
+    _.optionsArea = _.root.find('.viewer-options');
+    _.optionsArea.toggle(false);
     _.fullscreen = _.controlsArea.find('.model-fullscreen');
     _.viewerStateInfo = _.root.find('.viewer-state-info');
     _.wireframeBtn = _.controlsArea.find('.model-wireframe');
-    _.informationsArea = _.root.find('.model-information');
+    _.informationsArea = _.root.find('.viewer-statistics');
     _.informationsArea.toggle(false);
     _.setImageTrigger();
     _.setEvents();
@@ -126,7 +127,7 @@ finna.modelViewer = (function modelViewer() {
         _.modelPath = response.data.url;
         _.canvasImage.remove();
         _.initViewer();
-        _.controlsArea.toggle(true);
+        _.optionsArea.toggle(true);
       })
       .fail(function onGetModelFailed(response) {
         _.setImageTrigger();
