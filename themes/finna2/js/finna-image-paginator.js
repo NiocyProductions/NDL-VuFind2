@@ -36,7 +36,7 @@ var translations = {
 function FinnaPaginator(element, images, settings) {
   var _ = this;
   _.trigger = $(element);
-
+  _.trigger.removeClass('init');
   _.root = _.trigger.closest('.recordcover-holder');
   _.images = images;
   _.settings = $.extend({}, defaults, settings);
@@ -401,8 +401,7 @@ FinnaPaginator.prototype.onBrowseButton = function onBrowseButton(direction) {
  */
 FinnaPaginator.prototype.onListButton = function onListButton(direction) {
   var _ = this;
-  var image = _.getImageFromArray(direction);
-  _.setListTrigger(image);
+  _.setListTrigger(_.getImageFromArray(direction));
   _.setButtons();
 };
 
@@ -841,6 +840,7 @@ FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   };
   _.canvasElements.leaflet.attr('id', 'leaflet-map-image');
   _.canvasElements.video.attr('id', 'video-player');
+  popup.toggleClass('nonzoomable', !_.settings.enableImageZoom);
 
   _.popup.leftBtn.off('click').on('click', function loadImages(){
     _.loadPage(-1);
@@ -888,7 +888,7 @@ FinnaPaginator.prototype.setTrigger = function setTrigger(imagePopup) {
       if (!_.settings.isList) {
         toggleButtons(_.moreBtn, _.lessBtn);
       }
-      popup.content.toggleClass('nonzoomable', !_.settings.enableImageZoom);
+      
       _.createPopupObject(popup.content);
       _.setPopupImageState(_.settings.enableImageZoom ? 'leaflet' : 'noZoom');
       _.setMaxImages();
