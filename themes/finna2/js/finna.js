@@ -16,6 +16,7 @@ var finna = (function finnaModule() {
         'feed',
         'feedback',
         'imagePopup',
+        'imageHandler',
         'itemStatus',
         'layout',
         'menu',
