@@ -23,7 +23,6 @@ function FinnaPopup(trigger, params, id) {
   _.classes = typeof params.classes === 'undefined' ? '' : params.classes;
   _.modalBase = typeof params.modal !== 'undefined' ? $(params.modal) : $('<div class="finna-popup default-modal"/>');
   _.translations = typeof params.translations !== 'undefined' ? params.translations : {close: 'close'};
-  _.unveil = typeof params.unveil !== 'undefined' ? params.unveil : false;
   _.embed = typeof params.embed !== 'undefined' ? params.embed : false;
   _.patterns = {
     youtube: {

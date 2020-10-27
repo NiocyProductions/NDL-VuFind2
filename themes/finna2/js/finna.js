@@ -15,8 +15,6 @@ var finna = (function finnaModule() {
         'dateRangeVis',
         'feed',
         'feedback',
-        'imagePopup',
-        'imageHandler',
         'itemStatus',
         'layout',
         'menu',

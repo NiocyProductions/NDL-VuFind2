@@ -1,6 +1,5 @@
 /* global finna, VuFind, L */
 var imageElement = '<a draggable="false" href="" class="image-popup image-popup-navi hidden-print"></a>';
-var paginatorIndex = 0;
 var timeOut = null;
 
 var defaults = {
@@ -40,7 +39,6 @@ function FinnaPaginator(element, images, settings) {
 
   _.root = _.trigger.closest('.recordcover-holder');
   _.images = images;
-  _.setPaginatorIndex(paginatorIndex++);
   _.settings = $.extend({}, defaults, settings);
   _.covers = _.root.find('.' + _.settings.recordCovers);
   _.offSet = 0;
@@ -76,6 +74,9 @@ function FinnaPaginator(element, images, settings) {
   _.init();
 }
 
+/**
+ * Clear the image holding tracks properly
+ */
 FinnaPaginator.prototype.clearTracks = function clearTracks() {
   var _ = this;
   if (typeof _.popup.track !== 'undefined') {
@@ -87,6 +88,11 @@ FinnaPaginator.prototype.clearTracks = function clearTracks() {
   }
 };
 
+/**
+ * Add an element to an active track
+ * 
+ * @param {HTMLElement} elem
+ */
 FinnaPaginator.prototype.appendTracks = function appendTracks(elem) {
   var _ = this;
   if (typeof _.popup.track !== 'undefined') {
@@ -96,16 +102,6 @@ FinnaPaginator.prototype.appendTracks = function appendTracks(elem) {
   if (typeof _.track !== 'undefined') {
     _.track.append(elem);
   }
-};
-
-/**
- * Helper function for setting paginator index.
- *
- * @param {int} index
- */
-FinnaPaginator.prototype.setPaginatorIndex = function setPaginatorIndex(index) {
-  var _ = this;
-  _.paginatorIndex = index;
 };
 
 /**
@@ -140,6 +136,7 @@ FinnaPaginator.prototype.init = function init() {
     _.covers.addClass('mini-paginator');
     _.covers.siblings('.recordcovers-more').first().hide();
   }
+  _.root.removeClass('paginate');
 };
 
 /**
@@ -156,27 +153,21 @@ FinnaPaginator.prototype.setReferences = function setReferences() {
   _.rightBtn = _.covers.find('.right-button');
   _.leftBrowseBtn = _.root.find('.next-image.left');
   _.rightBrowseBtn = _.root.find('.next-image.right');
-  if (_.settings.isList) {
-    _.pagerInfo = _.covers.find('.paginator-info');
-  } else {
-    _.pagerInfo = _.trigger.find('.paginator-info');
-  }
+  _.pagerInfo = _.settings.isList ? _.covers.find('.paginator-info') : _.trigger.find('.paginator-info');
 
+  if (_.images.length < 2) {
+    _.covers.hide();
+    _.pagerInfo.hide();
+  }
+  if (_.images.length < _.settings.imagesPerRow) {
+    $('.recordcovers-more').hide();
+  }
   _.leftBrowseBtn.off('click').click(function browseLeft() {
     _.onBrowseButton(-1);
   });
   _.rightBrowseBtn.off('click').click(function browseRight() {
     _.onBrowseButton(1);
   });
-
-  if (_.images.length < 2) {
-    _.covers.hide();
-    _.pagerInfo.hide();
-  }
-
-  if (_.images.length < _.settings.imagesPerRow) {
-    $('.recordcovers-more').hide();
-  }
 };
 
 /**
@@ -444,7 +435,9 @@ FinnaPaginator.prototype.setPopupImageState = function setPopupImageState(type) 
       bounceAtZoomLimits: false
     });
     _.setCanvasElement('leaflet');
-    break;    
+    break;
+  default:
+    break;
   }
 };
 
@@ -511,8 +504,7 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
     $(image).css('opacity', '');
     _.setDimensions();
     if (image.naturalWidth && image.naturalWidth === 10 && image.naturalHeight === 10) {
-      _.trigger.addClass('no-image');
-      _.trigger.trigger('removeclick');
+      _.trigger.addClass('no-image').trigger('removeclick');
       $(image).attr('alt', translations.no_cover);
       if (_.settings.isList) {
         if (_.images.length < 2) {
@@ -546,7 +538,6 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
     }
   }
   _.imageDetail.html(imagePopup.data('description'));
-
   img.unveil(100, function handleLoading() {
     $(this).on('load', function handleImage() {
       setImageProperties(this);
@@ -840,7 +831,9 @@ FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   _.popup.rightBrowseBtn = popup.find('.next-image.right');
   _.popup.summary = popup.find('.imagepopup-holder .summary');
   _.popup.covers.removeClass('mini-paginator');
-
+  if (_.images.length < 2) {
+    _.popup.covers.parent().hide();
+  }
   _.canvasElements = {
     leaflet: popup.find('.leaflet-map-image'),
     noZoom: popup.find('.popup-nonzoom'),
