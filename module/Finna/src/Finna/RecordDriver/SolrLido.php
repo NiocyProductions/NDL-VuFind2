@@ -367,7 +367,7 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
     public function getModelData()
     {
         $data = [];
-        foreach ($this->getSimpleXML()->xpath(
+        foreach ($this->getXmlRecord()->xpath(
             '/lidoWrap/lido/administrativeMetadata/'
             . 'resourceWrap/resourceSet'
         ) as $resourceSet) {
