@@ -6,11 +6,11 @@ use VuFind\Cache\Manager as CacheManager;
 use VuFind\I18n\Translator\TranslatorAwareInterface;
 use VuFind\Record\Loader;
 use VuFind\Session\Settings as SessionSettings;
-use Zend\Config\Config;
-use Zend\Mvc\Controller\Plugin\Params;
-use Zend\View\Renderer\RendererInterface;
-use Zend\Http\Request;
-use Zend\View\Helper\ServerUrl;
+use Laminas\Config\Config;
+use Laminas\Mvc\Controller\Plugin\Params;
+use Laminas\View\Renderer\RendererInterface;
+use Laminas\Http\Request;
+use Laminas\View\Helper\ServerUrl;
 
 class GetModel extends \VuFind\AjaxHandler\AbstractBase
     implements \VuFindHttp\HttpServiceAwareInterface
@@ -46,7 +46,7 @@ class GetModel extends \VuFind\AjaxHandler\AbstractBase
      */
     public function __construct(
         SessionSettings $ss, CacheManager $cm,
-        Config $config, Loader $loader, \Zend\Router\Http\TreeRouteStack $router,
+        Config $config, Loader $loader, \Laminas\Router\Http\TreeRouteStack $router,
         string $domainUrl
     ) {
         $this->sessionSettings = $ss;

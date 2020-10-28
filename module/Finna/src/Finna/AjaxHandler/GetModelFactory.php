@@ -39,7 +39,7 @@ use Interop\Container\ContainerInterface;
  * @link     https://vufind.org/wiki/development Wiki
  */
 class GetModelFactory
-    implements \Zend\ServiceManager\Factory\FactoryInterface
+    implements \Laminas\ServiceManager\Factory\FactoryInterface
 {
     /**
      * Create an object
@@ -68,7 +68,7 @@ class GetModelFactory
             $container->get(\VuFind\Cache\Manager::class),
             $container->get(\VuFind\Config\PluginManager::class)->get('config'),
             $container->get(\VuFind\Record\Loader::class),
-            $container->get(\Zend\Router\Http\TreeRouteStack::class),
+            $container->get(\Laminas\Router\Http\TreeRouteStack::class),
             $domainUrl = $container->get('ViewRenderer')
                 ->plugin('serverurl')->__invoke('/')
         );

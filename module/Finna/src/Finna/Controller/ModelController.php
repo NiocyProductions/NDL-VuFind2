@@ -6,7 +6,7 @@ use VuFind\Cover\CachingProxy;
 use VuFind\Cover\Loader;
 use VuFind\Session\Settings as SessionSettings;
 
-class ModelController extends \Zend\Mvc\Controller\AbstractActionController
+class ModelController extends \Laminas\Mvc\Controller\AbstractActionController
 {
     protected $datasourceConfig;
 
@@ -17,7 +17,7 @@ class ModelController extends \Zend\Mvc\Controller\AbstractActionController
     protected $sessionSettings = null;
 
     public function __construct(CachingProxy $proxy,
-        SessionSettings $ss, \Zend\Config\Config $datasources,
+        SessionSettings $ss, \Laminas\Config\Config $datasources,
         \VuFind\Record\Loader $recordLoader
     ) {
         $this->proxy = $proxy;
@@ -55,7 +55,7 @@ class ModelController extends \Zend\Mvc\Controller\AbstractActionController
 
         // Add a filename to the headers so that saving an image defaults to a
         // sensible filename
-        if ($response instanceof \Zend\Http\PhpEnvironment\Response) {
+        if ($response instanceof \Laminas\Http\PhpEnvironment\Response) {
             $headers = $response->getHeaders();
             $contentType = $headers->get('Content-Type');
             if ($contentType && $contentType->match('image/jpeg')) {
