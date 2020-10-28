@@ -6,6 +6,8 @@ finna.changeHolds = (function finnaChangeHolds() {
     function pickupSubmitHandler() {
       $().dropdown('toggle');
       var selected = $(this);
+      var recordId = selected.data('recordId');
+      var itemId = selected.data('itemId');
       var requestId = selected.data('requestId');
       var locationId = selected.data('locationId');
       var locationDisplay = selected.data('locationDisplay');
@@ -19,6 +21,8 @@ finna.changeHolds = (function finnaChangeHolds() {
 
       var params = {
         method: 'changePickupLocation',
+        id: recordId,
+        itemId: itemId,
         requestId: requestId,
         pickupLocationId: locationId
       };
@@ -53,12 +57,15 @@ finna.changeHolds = (function finnaChangeHolds() {
         pickupLocations.data('populated', 1);
         var spinnerLoad = $(this).find('.pickup-location-load-indicator');
         spinnerLoad.removeClass('hidden');
-        var recordId = $(this).data('record-id');
-        var requestId = $(this).data('request-id');
+        var recordId = $(this).data('recordId');
+        var itemId = $(this).data('itemId');
+        var requestId = $(this).data('requestId');
         var params = {
           method: 'getRequestGroupPickupLocations',
           id: recordId,
-          requestGroupId: '0'
+          itemId: itemId,
+          requestGroupId: '0',
+          requestId: requestId
         };
         $.ajax({
           data: params,
@@ -69,7 +76,13 @@ finna.changeHolds = (function finnaChangeHolds() {
           .done(function onPickupLocationsDone(response) {
             $.each(response.data.locations, function addPickupLocation() {
               var item = $('<li class="pickupLocationItem" role="menuitem"></li>')
-                .data('locationId', this.locationID).data('locationDisplay', this.locationDisplay).data('requestId', requestId).data('hold', hold).click(pickupSubmitHandler);
+                .data('locationId', this.locationID)
+                .data('locationDisplay', this.locationDisplay)
+                .data('recordId', recordId)
+                .data('itemId', itemId)
+                .data('requestId', requestId)
+                .data('hold', hold)
+                .click(pickupSubmitHandler);
               var text = $('<a></a>').text(this.locationDisplay);
               item.append(text);
               pickupLocations.append(item);
@@ -84,7 +97,7 @@ finna.changeHolds = (function finnaChangeHolds() {
       }
     });
 
-    function changeHoldStatus(container, requestId, frozen) {
+    function changeHoldStatus(container, requestId, recordId, itemId, frozen) {
       var spinnerChange = container.find('.status-change-load-indicator');
 
       $('.hold-change-success').remove();
@@ -94,6 +107,8 @@ finna.changeHolds = (function finnaChangeHolds() {
       var params = {
         method: 'changeRequestStatus',
         requestId: requestId,
+        id: recordId,
+        itemId: itemId,
         frozen: frozen
       };
       $.ajax({
@@ -124,15 +139,19 @@ finna.changeHolds = (function finnaChangeHolds() {
 
     $('.hold-status-freeze').click(function onClickHoldFreeze() {
       var container = $(this).closest('.change-hold-status');
-      var requestId = container.data('request-id');
-      changeHoldStatus(container, requestId, 1);
+      var requestId = container.data('requestId');
+      var recordId = container.data('recordId');
+      var itemId = container.data('itemId');
+      changeHoldStatus(container, requestId, recordId, itemId, 1);
       return false;
     });
 
     $('.hold-status-release').click(function onClickHoldRelease() {
       var container = $(this).closest('.change-hold-status');
-      var requestId = container.data('request-id');
-      changeHoldStatus(container, requestId, 0);
+      var requestId = container.data('requestId');
+      var recordId = container.data('recordId');
+      var itemId = container.data('itemId');
+      changeHoldStatus(container, requestId, recordId, itemId, 0);
       return false;
     });
   }

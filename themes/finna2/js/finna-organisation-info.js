@@ -111,6 +111,7 @@ finna.organisationInfo = (function finnaOrganisationInfo() {
       });
 
     var address = '';
+    var mailAddress = '';
     var street = getField(data.address, 'street');
     if (street) {
       address += street;
@@ -119,12 +120,33 @@ finna.organisationInfo = (function finnaOrganisationInfo() {
     if (zipcode) {
       address += ', ' + zipcode;
     }
-    var area = getField(data.address, 'area');
-    if (area) {
-      address += ' ' + area;
+    var city = getField(data.address, 'city');
+    if (city) {
+      address += ' ' + city;
     }
 
     details.address = address;
+
+    var mail = getField(data, 'mailAddress');
+    if (mail) {
+      var mailStreet = getField(mail, 'street');
+      if (mailStreet) {
+        mailAddress += mailStreet + '<br>';
+      }
+      var mailBoxnumber = getField(mail, 'boxNumber');
+      if (mailBoxnumber) {
+        mailAddress += VuFind.translate('organisation_info_box_number') + ' ' + mailBoxnumber + '<br>';
+      }
+      var mailZipcode = getField(mail, 'zipcode');
+      if (mailZipcode) {
+        mailAddress += mailZipcode;
+      }
+      var mailArea = getField(mail, 'area');
+      if (mailArea) {
+        mailAddress += ' ' + mailArea;
+      }
+      details.mailAddress = mailAddress;
+    }
 
     var cached = getCachedDetails(id);
     if (cached) {
@@ -166,7 +188,7 @@ finna.organisationInfo = (function finnaOrganisationInfo() {
       cacheSchedules(id, obj);
 
       var result = {};
-      $(['openTimes', 'scheduleDescriptions', 'periodStart', 'weekNum', 'currentWeek', 'phone', 'links', 'facility-image', 'services', 'pictures', 'rss'])
+      $(['openTimes', 'scheduleDescriptions', 'periodStart', 'weekNum', 'currentWeek', 'phone', 'emails', 'links', 'facility-image', 'services', 'pictures', 'rss'])
         .each(function handleField(ind, field) {
           var val = getField(obj, field, id);
           if (val) {

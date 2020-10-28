@@ -1,8 +1,7 @@
 <!-- START of: finna - RecordDriver/DefaultRecord/record-image-paginator.phtml -->
 <?php
   $isList = ($type === 'list' || $type === 'list grid');
-  $enableImageZoom = (isset($enableImagePopupZoom) && $enableImagePopupZoom) && in_array($this->driver->tryMethod('getRecordType'), ['lido', 'forward', 'ead', 'qdc']);
-  $models = [];
+  $enableImageZoom = (isset($enableImagePopupZoom) && $enableImagePopupZoom) && in_array($this->driver->tryMethod('getRecordFormat'), ['lido', 'forward', 'ead', 'qdc']);
 ?>
 <?php if ($type === 'record' || !$this->userAgent()->isBot()): ?>
   <?php
@@ -30,7 +29,7 @@
   <?php if (!$this->userAgent()->isBot()): ?>
     <?php if (!empty($images[0]['urls']['medium']) || !empty($images[0]['urls']['large'])): ?>
       <div class="recordcover-container">
-        <button class="next-image left" type="button"><i class="fa fa-chevron-left"></i></button>
+        <button class="next-image left" type="button"><i class="fa fa-chevron-left"></i><span class="sr-only"><?= $this->transEsc('previous_image') ?></span></button>
         <?php if (!$this->disableModal): ?>
           <a class="image-popup-trigger" href="<?=$this->recordLink()->getUrl($this->driver) ?>#image">
         <?php else: ?>
@@ -45,7 +44,7 @@
           </span>
         <?php endif; ?>
         <span class="hidden-trigger" hidden></span>
-        <button class="next-image right" type="button"><i class="fa fa-chevron-right"></i></button>
+        <button class="next-image right" type="button"><i class="fa fa-chevron-right"></i><span class="sr-only"><?= $this->transEsc('next_image') ?></span></button>
       </div>
     <?php endif; ?>
   <?php else: ?>
@@ -56,11 +55,11 @@
     </p>
   </div>
   <div class="recordcovers <?=$this->escapeHtmlAttr($type)?>">
-    <button class="left-button" type="button" title="<?= $this->transEsc("previous_images") ?>"><i class="fa fa-handle-left"></i></button>
+    <button class="left-button" type="button" title="<?= $this->transEsc('previous_images') ?>"><i class="fa fa-handle-left"></i><span class="sr-only"><?= $this->transEsc('previous_images') ?></span></button>
     <div class="track-holder paginator-mask">
       <div class="finna-element-track"></div>
     </div>
-    <button class="right-button" type="button" title="<?= $this->transEsc("next_images") ?>"><i class="fa fa-handle-right"></i></button>
+    <button class="right-button" type="button" title="<?= $this->transEsc('next_images') ?>"><i class="fa fa-handle-right"><span class="sr-only"><?= $this->transEsc('next_images') ?></span></i></button>
     <div class="paginator-info"><span class="image-index"></span></div>
   </div>
   <div class="recordcovers-more more-area">
@@ -68,10 +67,11 @@
     <button type="button" class="show-less-images"><?= $this->transEsc('less') ?> <i class="fa fa-arrow-up"></i></button>
   </div>
   <?php if (count($paginatedLinks) > 0): ?>
-    <script>
-      <?php $settings = [
+    <?php
+      $settings = [
         'recordId' => $this->driver->getUniqueId(),
-        'recordType' => $this->driver->tryMethod('getRecordType'),
+        'recordType' => $this->driver->tryMethod('getRecordFormat'),
+        'recordSource' => $this->driver->tryMethod('getSourceIdentifier'),
         'imagesPerPage' => 8,
         'imagesOnMobile' => $numOfImages['mobile'] ?? 4,
         'imagesOnNormal' => $numOfImages['mobile'] ?? 8,
@@ -80,12 +80,10 @@
         'maxRows' => 3,
         'iconlabelClass' => "format-" . $this->record($this->driver)->getFormatClass(end($formats)),
         'isList' => $type === 'list' || $type === 'list grid'
-      ];?>
-      finna.imagePaginator.initPaginator(
-        <?= json_encode($paginatedLinks) ?>,
-        <?= json_encode($settings) ?>
-      );
-    </script>
+      ];
+      $script = 'finna.imagePaginator.initPaginator(' . json_encode($paginatedLinks) . ', ' . json_encode($settings) . ');';
+      echo $this->inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, $script, 'SET');
+    ?>
   <?php endif; ?>
 
 <?php endif;?>

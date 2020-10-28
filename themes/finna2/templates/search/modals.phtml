@@ -1,10 +1,12 @@
 <!-- START of: finna - search/modals.phtml -->
 <!-- BASIC MODAL IN CASE WE NEED ONE -->
-<div id="modal" class="modal fade hidden-print" tabindex="-1" role="dialog">
+<div id="modal" class="modal fade hidden-print" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <button type="button" class="close" data-dismiss="modal" aria-label="<?= $this->transEsc('close') ?>"></button>
-      <div class="modal-body"><?=$this->transEsc('Loading') ?>...</div>
+      <div class="modal-body">
+        <?=$this->transEsc('Loading') ?>...
+      </div>
     </div>
   </div>
 </div>
@@ -14,7 +16,7 @@
   <div class="imagepopup-holder" aria-hidden="true">
     <div class="imagepopup-container">
       <div class="popup-canvas paginator-canvas">
-        <button class="next-image left" title="<?= $this->transEsc('previous_image'); ?>" type="button"><i class="fa fa-chevron-left"></i></button>
+        <button class="next-image left" title="<?= $this->transEsc('previous_image'); ?>" type="button"><i class="fa fa-chevron-left"></i><span class="sr-only"><?= $this->transEsc('previous_image'); ?></span></button>
         <div class="popup-nonzoom non-zoomable">
           <div class="iconlabel"></div>
           <img src="<?= $this->imageSrc()->getDataPixel() ?>" alt="" />
@@ -22,22 +24,22 @@
         <div class="leaflet-map-image image-wrapper">
           <img src="<?=$this->imageSrc()->getDataPixel()?>" alt="" />
           <div class="imagepopup-zoom-container">
-            <div class="zoom-in zoom-button"><i class="fa fa-zoom-in" aria-hidden="true"></i></div>
-            <div class="zoom-out zoom-button"><i class="fa fa-zoom-out" aria-hidden="true"></i></div>
-            <div class="zoom-reset zoom-button"><i class="fa fa-zoom-100" aria-hidden="true"></i></div>
+            <button class="zoom-in zoom-button" title="<?= $this->transEsc('zoom_in'); ?>"><i class="fa fa-zoom-in" aria-hidden="true"></i><span class="sr-only"><?= $this->transEsc('zoom_in'); ?></span></button>
+            <button class="zoom-out zoom-button" title="<?= $this->transEsc('zoom_out'); ?>"><i class="fa fa-zoom-out" aria-hidden="true"></i><span class="sr-only"><?= $this->transEsc('zoom_out'); ?></span></button>
+            <button class="zoom-reset zoom-button" title="<?= $this->transEsc('zoom_center'); ?>"><i class="fa fa-zoom-100" aria-hidden="true"></i><span class="sr-only"><?= $this->transEsc('zoom_center'); ?></span></button>
           </div>
           <div class="leaflet-image-loading">
           </div>
         </div>
-        <div class="popup-video video-popup"><video class="video-js vjs-big-play-centered" controls></video></div>
-        <button class="next-image right" title="<?= $this->transEsc('next_image'); ?>" type="button"><i class="fa fa-chevron-right"></i></button>
+        <div class="popup-video video-popup"></div>
+        <button class="next-image right" title="<?= $this->transEsc('next_image'); ?>" type="button"><i class="fa fa-chevron-right"></i><span class="sr-only"><?= $this->transEsc('next_image'); ?></span></button>
       </div>
       <div class="finna-image-pagination">
       </div>
     </div>
     <div class="image-information-holder">
       <div class="collapse-content-holder">
-      </div>  
+      </div>
       <div class="record-informations">
         <div class="record-index">
           <span class="total"></span>

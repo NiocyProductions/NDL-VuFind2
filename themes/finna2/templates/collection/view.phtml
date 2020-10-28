@@ -74,7 +74,7 @@
     <?php
       $formatter = $this->recordDataFormatter();
       $coreFields = $formatter->getData(
-          $driver, $formatter->filterCollectionFields($formatter->getDefaults('core'), $driver->getRecordType())
+          $driver, $formatter->filterCollectionFields($formatter->getDefaults('core'), $driver->getRecordFormat())
       );
     ?>
     <?php if (!empty($coreFields)): ?>
@@ -190,5 +190,5 @@
 </div>
 <?=$this->record($this->driver)->renderTemplate('toolbar_mobile.phtml') ?>
 <div>
-<?=$this->inlineScript(\Zend\View\Helper\HeadScript::SCRIPT, '$(document).ready(recordDocReady);', 'SET') ?>
+<?=$this->inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, '$(document).ready(recordDocReady);', 'SET') ?>
 <!-- END of: finna - collection/view.phtml -->

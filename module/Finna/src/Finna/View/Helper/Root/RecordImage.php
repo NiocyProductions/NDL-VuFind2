@@ -39,17 +39,17 @@ namespace Finna\View\Helper\Root;
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org   Main Site
  */
-class RecordImage extends \Zend\View\Helper\AbstractHelper
+class RecordImage extends \Laminas\View\Helper\AbstractHelper
 {
     /**
      * Record view helper
      *
-     * @var Zend\View\Helper\Record
+     * @var Record
      */
     protected $record;
 
     /**
-     * Assign record image URLs to the view and return header view helper.
+     * Assign record image URLs to the view and return the view helper.
      *
      * @param \Finna\View\Helper\Root\Record $record Record helper.
      *
@@ -265,7 +265,7 @@ class RecordImage extends \Zend\View\Helper\AbstractHelper
      * @param string $source      Record source
      * @param array  $extraParams Optional extra parameters:
      *                            - boolean $disableModal
-     *                            Whether to disable MagnificPopup modal
+     *                            Whether to disable FinnaPopup modal
      *                            - string  $imageRightsLabel
      *                            Label for image rights statement
      *                            - array   $numOfImages

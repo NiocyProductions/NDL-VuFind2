@@ -155,7 +155,7 @@ mark, .highlight {
 }
 // fix truncate links 1px cutoff on the left
 .available-online-links, .recordURLs {
-  .truncate-field.truncate-done, .resolver {
+  a {
     padding-left: 1px;
   }
 }
@@ -209,7 +209,7 @@ mark, .highlight {
     margin-top: 2px;
   }
 }
-
+.main.template-dir-content.template-name-content .public-list-embed .result,
 .result {
   .media-left,
   .media-right {
@@ -435,4 +435,17 @@ h2 {
       background-size: 350% auto;
     }
   }
+}
+
+.search-bg-image-info {
+  display: flex;
+  justify-content: flex-end;
+}
+.search-bg-image-info-content {
+  background: rgba(255,255,255,0.9);
+  color: @gray;
+  display: inline-flex;
+  font-size: 0.8em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
 }

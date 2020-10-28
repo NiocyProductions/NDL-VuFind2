@@ -6,13 +6,12 @@ override_full_sections = "UpdateAddress"
 ; An optional catalog id that is used in the translation string when translating
 ; location names and opac messages (e.g. location_{id}_ADU)
 id = "outi"
-; URL of the Koha Rest API without the version
+; The API address without any version such as v1
 host = "http://koha-server/api"
-; Whether the "paged" API endpoint is available for loans. Default is false.
-;checkoutsSupportPaging = true
-; Whether the availability API endpoint supports returning pickup locations.
-; Default is false.
-;availabilitySupportsPickupLocations = true
+; OAuth2 client ID
+clientId = ""
+; OAuth2 client secret
+clientSecret = ""
 
 [Holds]
 ; defaultRequiredDate - A colon-separated list used to set the default "not required
@@ -104,8 +103,8 @@ summary = "863abiz:866az"
 supplements = "867az"
 ; Fields to include in indexes. Default is none.
 indexes = "868az"
-; Whether to display home branch instead of holding branch. Default is false.
-;use_home_branch = true
+; Whether to display home library instead of holding library. Default is false.
+;useHomeLibrary = true
 ; By default the holdings list is sorted alphabetically. This setting can be
 ; used to manually set the order of branches and locations by entering codes as a
 ; colon-separated list. Branch and location may be combined with a slash. By default
@@ -136,10 +135,6 @@ enabled = true
 minimumFee = 65
 ; Email address for transactions that could not be registered.
 ;errorEmail = ''
-; Payment processing operator card ID in Koha
-userId = 'admin'
-; Payment processing operator password in Koha
-userPassword = ''
 ; Maximum duration (in minutes) for a transaction.
 transactionMaxDuration = 15
 ; Currency
@@ -147,10 +142,6 @@ currency = 'EUR'
 
 [PasswordRecovery]
 enabled = true
-; Recovery processing operator card ID in Koha
-userId = 'admin'
-; Recovery processing operator password in Koha
-userPassword = '1234'
 
 [Loans]
 ; How many loans can be displayed on a single page
@@ -160,7 +151,7 @@ userPassword = '1234'
 ; The field to display as the phone number. Default is mobile.
 ; Set to empty string for "none".
 ;phoneNumberField = ""
-; The field to display as the SMS number. Default is smsalertnumber.
+; The field to display as the SMS number. Default is sms_number.
 ; Set to empty string for "none".
 ;smsNumberField = ""
 
@@ -169,5 +160,5 @@ userPassword = '1234'
 [updateSmsNumber]
 ;method = driver
 ; Link the SMS number to the following Koha fields. Default for Finna is
-; "smsalertnumber,phone".
-;fields = "smsalertnumber,phone"
+; "sms_number,phone".
+;fields = "sms_number,phone"

@@ -5,7 +5,7 @@
  * PHP version 7
  *
  * Copyright (C) Villanova University 2010.
- * Copyright (C) The National Library of Finland 2012-2016.
+ * Copyright (C) The National Library of Finland 2012-2020.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -24,6 +24,7 @@
  * @package  RecordDrivers
  * @author   Samuli Sillanpää <samuli.sillanpaa@helsinki.fi>
  * @author   Ere Maijala <ere.maijala@helsinki.fi>
+ * @author   Aleksi Peebles <aleksi.peebles@helsinki.fi>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org/wiki/vufind2:record_drivers Wiki
  */
@@ -36,19 +37,14 @@ namespace Finna\RecordDriver;
  * @package  RecordDrivers
  * @author   Samuli Sillanpää <samuli.sillanpaa@helsinki.fi>
  * @author   Ere Maijala <ere.maijala@helsinki.fi>
+ * @author   Aleksi Peebles <aleksi.peebles@helsinki.fi>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org/wiki/vufind2:record_drivers Wiki
  */
 class Primo extends \VuFind\RecordDriver\Primo
 {
     use FinnaRecordTrait;
-
-    /**
-     * Record metadata
-     *
-     * @var \SimpleXMLElement
-     */
-    protected $simpleXML;
+    use XmlReaderTrait;
 
     /**
      * Indicate whether export is disabled for a particular format.
@@ -87,11 +83,11 @@ class Primo extends \VuFind\RecordDriver\Primo
             return [];
         }
 
-        // Whitelist:
-        $whitelist = array_map(
+        // Allowed formats:
+        $allowed = array_map(
             'trim', explode(',', $this->mainConfig->Record->citation_formats)
         );
-        return array_intersect($whitelist, $this->getSupportedCitationFormats());
+        return array_intersect($allowed, $this->getSupportedCitationFormats());
     }
 
     /**
@@ -135,9 +131,7 @@ class Primo extends \VuFind\RecordDriver\Primo
      */
     public function getType()
     {
-        $fullrecord = simplexml_load_string($this->fields['fullrecord']);
-        return isset($fullrecord->display->type)
-            ? (string)$fullrecord->display->type : null;
+        return $this->getXmlRecord()->type ?? null;
     }
 
     /**
@@ -159,13 +153,13 @@ class Primo extends \VuFind\RecordDriver\Primo
 
         $urls = [];
 
-        $rec = $this->getSimpleXML();
+        $xml = $this->getXmlRecord();
 
         $links = ['linktorsrc' => false, 'backlink' => true];
         foreach ($links as $link => $citation) {
             $url = '';
-            if (isset($rec->links->{$link})) {
-                $url = (string)$rec->links->{$link};
+            if (isset($xml->links->{$link})) {
+                $url = (string)$xml->links->{$link};
                 $parts = explode('$$', $url);
                 $url = substr($parts[1], 1);
                 $urlParts = parse_url($url);
@@ -206,8 +200,8 @@ class Primo extends \VuFind\RecordDriver\Primo
             return true;
         }
 
-        $rec = $this->getSimpleXML();
-        if (!isset($rec->search->sourceid)) {
+        $xml = $this->getXmlRecord();
+        if (!isset($xml->search->sourceid)) {
             return true;
         }
 
@@ -247,7 +241,7 @@ class Primo extends \VuFind\RecordDriver\Primo
             return true;
         }
 
-        $source = $rec->search->sourceid;
+        $source = $xml->search->sourceid;
 
         if ($showFromSource) {
             if (!count(array_intersect($showFromSource, ['*', $source]))) {
@@ -287,9 +281,9 @@ class Primo extends \VuFind\RecordDriver\Primo
      */
     public function getPublicationDates()
     {
-        $rec = $this->getSimpleXML();
-        if (isset($rec->facets->creationdate)) {
-            return (array)($rec->facets->creationdate);
+        $xml = $this->getXmlRecord();
+        if (isset($xml->facets->creationdate)) {
+            return (array)($xml->facets->creationdate);
         }
     }
 
@@ -300,9 +294,9 @@ class Primo extends \VuFind\RecordDriver\Primo
      */
     public function getCleanDOI()
     {
-        $rec = $this->getSimpleXML();
-        return isset($rec->addata->doi)
-            ? (string)$rec->addata->doi : false;
+        $xml = $this->getXmlRecord();
+        return isset($xml->addata->doi)
+            ? (string)$xml->addata->doi : false;
     }
 
     /**
@@ -368,9 +362,21 @@ class Primo extends \VuFind\RecordDriver\Primo
     /**
      * Return record format.
      *
+     * @deprecated Use getRecordFormat()
+     *
      * @return string
      */
     public function getRecordType()
+    {
+        return $this->getRecordFormat();
+    }
+
+    /**
+     * Return record format.
+     *
+     * @return string
+     */
+    public function getRecordFormat()
     {
         return $this->fields['format'];
     }
@@ -392,9 +398,9 @@ class Primo extends \VuFind\RecordDriver\Primo
      */
     public function getFulltextAvailable()
     {
-        $rec = $this->getSimpleXML();
-        if (isset($rec->delivery->fulltext)) {
-            return $rec->delivery->fulltext == 'fulltext';
+        $xml = $this->getXmlRecord();
+        if (isset($xml->delivery->fulltext)) {
+            return $xml->delivery->fulltext == 'fulltext';
         }
         return false;
     }
@@ -435,6 +441,58 @@ class Primo extends \VuFind\RecordDriver\Primo
     }
 
     /**
+     * Return information whether this is a peer reviewed record.
+     *
+     * @return bool
+     */
+    public function getPeerReviewed()
+    {
+        $xml = $this->getXmlRecord();
+        if (isset($xml->display->lds50)) {
+            return ((string)$xml->display->lds50) === 'peer_reviewed';
+        }
+        return false;
+    }
+
+    /**
+     * Return information whether this is an open access record.
+     *
+     * @return bool
+     */
+    public function getOpenAccess()
+    {
+        $xml = $this->getXmlRecord();
+        if (isset($xml->display->oa)) {
+            return ((string)$xml->display->oa) === 'free_for_read';
+        }
+        return false;
+    }
+
+    /**
+     * Returns an array of 0 or more record label constants, or null if labels
+     * are not enabled in configuration.
+     *
+     * @return array|null
+     */
+    public function getRecordLabels()
+    {
+        if (!$this->getRecordLabelsEnabled()) {
+            return null;
+        }
+        $labels = [];
+        if ($this->getFulltextAvailable()) {
+            $labels[] = FinnaRecordLabelInterface::FULL_TEXT_AVAILABLE;
+        }
+        if ($this->getPeerReviewed()) {
+            $labels[] = FinnaRecordLabelInterface::PEER_REVIEWED;
+        }
+        if ($this->getOpenAccess()) {
+            $labels[] = FinnaRecordLabelInterface::OPEN_ACCESS;
+        }
+        return $labels;
+    }
+
+    /**
      * Get default OpenURL parameters.
      *
      * @return array
@@ -454,28 +512,13 @@ class Primo extends \VuFind\RecordDriver\Primo
             : '';
         if ($dates = $this->getPublicationDates()) {
             $params['rft.date'] = $params['rft_date']
-                = implode('', $this->getPublicationDates());
+                = implode('', $dates);
         }
         if (!isset($params['rft.title'])) {
             $params['rft.title'] = $this->getTitle();
         }
 
         return $params;
-    }
-
-    /**
-     * Get the original record as a SimpleXML object
-     *
-     * @return SimpleXMLElement The record as SimpleXML
-     */
-    protected function getSimpleXML()
-    {
-        if ($this->simpleXML !== null) {
-            return $this->simpleXML;
-        }
-        $this->simpleXML = new \SimpleXmlElement($this->fields['fullrecord']);
-
-        return $this->simpleXML;
     }
 
     /**

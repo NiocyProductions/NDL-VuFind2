@@ -3,6 +3,13 @@
     <div class="public-list-row">
       <?php if ($this->title): ?><h<?=$this->headingLevel?>><?= $this->title ?></h<?=$this->headingLevel?>><?php endif ?>
       <?php if ($this->description): ?><div class="public-list-desc"><?= $this->markdown()->toHtml($this->description) ?></div><?php endif ?>
+      <?php if ($this->listTags): ?>
+        <div class="public-list-tags">
+          <?php foreach ($this->listTags as $tag): ?>
+            <div class="tag"><?= $this->escapeHtml($tag->tag) ?></div>
+          <?php endforeach ?>
+        </div>
+      <?php endif ?>
       <?php if ($this->date): ?>
         <div class="public-list-info">
           <div><?= $this->transEsc("modified"); ?>: <?=$this->dateTime()->convertToDisplayDate('Y-m-d H:i:s', $this->date); ?></div>
@@ -19,7 +26,7 @@
       </div>
     </div>
   <?php endif; ?>
-  <div class="public-list-view results result-view-<?=$this->escapeHtmlAttr($this->params->getView())?>">
+  <div class="public-list-view results result-view-<?=$this->escapeHtmlAttr($this->view)?>">
     <?= $this->partial('search/list-' . $this->view . '.phtml',
     [
       'results' => $this->results,
@@ -39,7 +46,7 @@
              ]
         ); ?>
         </div>
-        <button class="btn btn-outline-primary load-more" aria-label="<?= $this->transEsc('See all')?>" data-id="<?= $this->escapeHtmlAttr($this->id)?>" data-start-index="<?= $this->escapeHtmlAttr($this->indexStart + $limit)?>" data-offset="<?= $this->escapeHtmlAttr($limit + 1)?>"><?= $this->transEsc('See all'); ?></button>
+        <button class="btn btn-outline-primary load-more" aria-label="<?= $this->transEsc('See all')?>" data-id="<?= $this->escapeHtmlAttr($this->id)?>" data-start-index="<?= $this->escapeHtmlAttr($this->indexStart + $limit)?>" data-offset="<?= $this->escapeHtmlAttr($limit + 1)?>" data-view="<?= $this->escapeHtmlAttr($this->view)?>"<?= $this->sort ? (' data-sort="' . $this->escapeHtmlAttr($this->sort) . '"') : ''?>><?= $this->transEsc('See all'); ?></button>
         <i class="fa fa-spinner fa-spin hide"></i>
       </div>
     <?php endif; ?>

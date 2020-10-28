@@ -4,7 +4,7 @@
  *
  * PHP version 7
  *
- * Copyright (C) The National Library 2015-2019.
+ * Copyright (C) The National Library 2015-2020.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -50,6 +50,13 @@ trait SolrFinnaTrait
      * @var array
      */
     protected $searchSettings = [];
+
+    /**
+     * Runtime cache for method results to avoid duplicate processing
+     *
+     * @var array
+     */
+    protected $cache = [];
 
     /**
      * Return access restriction notes for the record.
@@ -316,17 +323,6 @@ trait SolrFinnaTrait
     }
 
     /**
-     * Return local record IDs (only works with dedup records)
-     *
-     * @return array
-     */
-    public function getLocalIds()
-    {
-        return isset($this->fields['local_ids_str_mv'])
-            ? $this->fields['local_ids_str_mv'] : [];
-    }
-
-    /**
      * Get an array of dedup and link data associated with the record.
      *
      * @return array
@@ -466,17 +462,6 @@ trait SolrFinnaTrait
     }
 
     /**
-     * Get sector
-     *
-     * @return string
-     */
-    public function getSector()
-    {
-        $sector = (string)($this->fields['sector_str_mv'][0] ?? '');
-        return $sector;
-    }
-
-    /**
      * Get all the original languages associated with the record
      *
      * @return array
@@ -500,11 +485,23 @@ trait SolrFinnaTrait
     /**
      * Return record format.
      *
+     * @deprecated Use getRecordFormat()
+     *
      * @return string
      */
     public function getRecordType()
     {
-        return $this->fields['recordtype'] ?? '';
+        return $this->getRecordFormat();
+    }
+
+    /**
+     * Return record format.
+     *
+     * @return string
+     */
+    public function getRecordFormat()
+    {
+        return $this->fields['record_format'] ?? $this->fields['recordtype'] ?? '';
     }
 
     /**
@@ -520,6 +517,11 @@ trait SolrFinnaTrait
      */
     public function getThumbnail($size = 'small')
     {
+        $cacheKey = __FUNCTION__ . "/$size";
+        if (isset($this->cache[$cacheKey])) {
+            return $this->cache[$cacheKey];
+        }
+
         $result = parent::getThumbnail($size);
 
         if (is_array($result) && !isset($result['isbn'])) {
@@ -529,6 +531,7 @@ trait SolrFinnaTrait
             }
         }
 
+        $this->cache[$cacheKey] = $result;
         return $result;
     }
 
@@ -550,6 +553,10 @@ trait SolrFinnaTrait
      */
     public function getFirstISBN()
     {
+        if (isset($this->cache[__FUNCTION__])) {
+            return $this->cache[__FUNCTION__];
+        }
+
         // Get all the ISBNs and initialize the return value:
         $isbns = $this->getISBNs();
         $isbn13 = false;
@@ -567,6 +574,7 @@ trait SolrFinnaTrait
                 return $isbn;
             }
         }
+        $this->cache[__FUNCTION__] = $isbn13;
         return $isbn13;
     }
 
@@ -795,16 +803,30 @@ trait SolrFinnaTrait
     /**
      * Get related records (used by RecordDriverRelated - Related module)
      *
-     * Returns an associative array of record ids.
+     * Returns an associative array of group => records, where each item in
+     * records is either a record id or an array that has a 'wildcard' key
+     * with a Solr compatible pattern as it's value.
+     *
+     * Notes on wildcard queries:
+     *  - Only the first record from the wildcard result set is returned.
+     *  - The wildcard query includes a filter that limits the results to
+     *    the same datasource as the issuing record.
+     *
      * The array may contain the following keys:
-     *   - parents
-     *   - children
      *   - continued-from
-     *   - other
+     *   - part-of
+     *   - contains
+     *   - see-also
+     *
+     * Examples:
+     * - continued-from
+     *     - source1.1234
+     *     - ['wildcard' => '*1234']
+     *     - ['wildcard' => 'source*1234*']
      *
      * @return array
      */
-    public function getRelatedItems()
+    public function getRelatedRecords()
     {
         return [];
     }
@@ -868,20 +890,24 @@ trait SolrFinnaTrait
     }
 
     /**
-     * Check if a URL (typically from getURLs()) is blacklisted based on the URL
+     * Check if a URL (typically from getURLs()) is blocked based on the URL
      * itself and optionally its description.
      *
      * @param string $url  URL
      * @param string $desc Optional description of the URL
      *
-     * @return boolean Whether the URL is blacklisted
+     * @return bool Whether the URL is blocked
      */
-    protected function urlBlacklisted($url, $desc = '')
+    protected function urlBlocked($url, $desc = '')
     {
-        if (!isset($this->recordConfig->Record->url_blacklist)) {
+        // Keep old setting name for back-compatibility:
+        $blocklist = $this->recordConfig->Record->url_blocklist
+            ?? $this->recordConfig->Record->url_blacklist
+            ?? [];
+        if (empty($blocklist)) {
             return false;
         }
-        foreach ($this->recordConfig->Record->url_blacklist as $rule) {
+        foreach ($blocklist as $rule) {
             if (substr($rule, 0, 1) == '/' && substr($rule, -1, 1) == '/') {
                 if (preg_match($rule, $url)
                     || ($desc !== '' && preg_match($rule, $desc))
@@ -986,6 +1012,7 @@ trait SolrFinnaTrait
         if (!isset($this->otherVersionsCount)) {
             $params = new \VuFindSearch\ParamBag();
             $params->add('rows', 0);
+            $this->addFilters($params);
             $results = $this->searchService->workExpressions(
                 $this->getSourceIdentifier(),
                 $this->getUniqueID(),
@@ -1018,6 +1045,7 @@ trait SolrFinnaTrait
         if (!isset($this->otherVersions)) {
             $params = new \VuFindSearch\ParamBag();
             $params->add('rows', min($count, 100));
+            $this->addFilters($params);
             $this->otherVersions = $this->searchService->workExpressions(
                 $this->getSourceIdentifier(),
                 $includeSelf ? '' : $this->getUniqueID(),
@@ -1026,5 +1054,25 @@ trait SolrFinnaTrait
             );
         }
         return $this->otherVersions;
+    }
+
+    /**
+     * Add filters to params
+     *
+     * @param \VuFindSearch\ParamBag $paramBag Params
+     *
+     * @return void
+     */
+    protected function addFilters(\VuFindSearch\ParamBag $paramBag)
+    {
+        $filterConf = $this->mainConfig->Record->display_versions ?? "all";
+        if ('same_source' === $filterConf) {
+            // Add source filter
+            $paramBag->add(
+                'fq',
+                'datasource_str_mv:"' . addcslashes($this->getDataSource(), '"')
+                    . '"'
+            );
+        }
     }
 }

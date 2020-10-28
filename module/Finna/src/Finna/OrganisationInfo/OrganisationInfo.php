@@ -44,7 +44,7 @@ namespace Finna\OrganisationInfo;
  */
 class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface,
-    \Zend\Log\LoggerAwareInterface
+    \Laminas\Log\LoggerAwareInterface
 {
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
     use \VuFindHttp\HttpServiceAwareTrait;
@@ -53,7 +53,7 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
     /**
      * Organisation configuration.
      *
-     * @var Zend\Config\Config
+     * @var Laminas\Config\Config
      */
     protected $config = null;
 
@@ -67,7 +67,7 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
     /**
      * View Renderer
      *
-     * @var \Zend\View\Renderer\PhpRenderer
+     * @var \Laminas\View\Renderer\PhpRenderer
      */
     protected $viewRenderer;
 
@@ -95,14 +95,14 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
     /**
      * Constructor.
      *
-     * @param \Zend\Config\Config             $config        Configuration
-     * @param \VuFind\Cache\Manager           $cacheManager  Cache manager
-     * @param \Zend\View\Renderer\PhpRenderer $viewRenderer  View renderer
-     * @param \VuFind\Date\Converter          $dateConverter Date converter
+     * @param \Laminas\Config\Config             $config        Configuration
+     * @param \VuFind\Cache\Manager              $cacheManager  Cache manager
+     * @param \Laminas\View\Renderer\PhpRenderer $viewRenderer  View renderer
+     * @param \VuFind\Date\Converter             $dateConverter Date converter
      */
-    public function __construct(\Zend\Config\Config $config,
+    public function __construct(\Laminas\Config\Config $config,
         \VuFind\Cache\Manager $cacheManager,
-        \Zend\View\Renderer\PhpRenderer $viewRenderer,
+        \Laminas\View\Renderer\PhpRenderer $viewRenderer,
         \VuFind\Date\Converter $dateConverter
     ) {
         $this->config = $config;
@@ -196,11 +196,6 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
      */
     public function query($parent, $params, $buildings = null)
     {
-        $id = null;
-        if (isset($params['id'])) {
-            $id = $params['id'];
-        }
-
         if (!$this->isAvailable()) {
             $this->logError("Organisation info disabled ($parent)");
             return false;
@@ -208,8 +203,7 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
 
         if (!isset($this->config->General->url)) {
             $this->logError(
-                "URL missing from organisation info configuration"
-                . "($parent)"
+                "URL missing from organisation info configuration ($parent)"
             );
             return false;
         }
@@ -462,10 +456,8 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
             return false;
         }
         $response = $response['items'][0];
-        $consortiumId = $response['id'];
 
         $consortium = [];
-        $finna = [];
 
         if ($target == 'page') {
             $consortium['name'] = $response['name'];
@@ -504,7 +496,7 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
         // Organisation list for a consortium with schedules for the current week
         $params = [
             'consortium' => $response['id'],
-            'with' => 'schedules,primaryContactInfo',
+            'with' => 'schedules,primaryContactInfo,mailAddress',
             'period.start' => $startDate,
             'period.end' => $endDate,
             'status' => '',
@@ -551,8 +543,8 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
         $with = 'schedules';
         if ($fullDetails) {
             $with .=
-                ',phoneNumbers,mailAddress,pictures,links,services,customData,
-                schedules';
+                ',phoneNumbers,emailAddresses,mailAddress,pictures,links,services,
+                customData,schedules';
         }
 
         $params = [
@@ -577,7 +569,7 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
         $scheduleDescriptions = null;
         if (isset($response['refs']['period'])) {
             $scheduleDescriptions = [];
-            foreach ($response['refs']['period'] as $key => $period) {
+            foreach ($response['refs']['period'] as $period) {
                 $scheduleDesc = $period['description'];
                 if (!empty($scheduleDesc)) {
                     $scheduleDescriptions[] = $scheduleDesc;
@@ -643,7 +635,7 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
         }
         if (!$response) {
             $client = $this->httpService->createClient(
-                $url, \Zend\Http\Request::METHOD_GET, 10
+                $url, \Laminas\Http\Request::METHOD_GET, 10
             );
             $result = $client->send();
             if ($result->isSuccess()) {
@@ -724,6 +716,18 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
                 'homepage' => $item['primaryContactInfo']['homepage']['url'] ?? null
             ];
 
+            if (!empty($item['mailAddress'])) {
+                $mailAddress = [
+                    'area' => $item['mailAddress']['area'],
+                    'boxNumber' => $item['mailAddress']['boxNumber'],
+                    'street' => $item['mailAddress']['street'],
+                    'zipcode' => $item['mailAddress']['zipcode']
+                ];
+            }
+            if (!empty($mailAddress)) {
+                $data['mailAddress'] = $mailAddress;
+            }
+
             if (!empty($item['address'])) {
                 $address = [
                     'street' => $item['address']['street'],
@@ -732,7 +736,7 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
 
                 if (!empty($item['address']['area'])) {
                     $address['city']
-                        = "{$item['address']['area']} / {$item['address']['city']}";
+                        = "{$item['address']['area']} ({$item['address']['city']})";
                 } else {
                     $address['city'] = $item['address']['city'];
                 }
@@ -841,6 +845,23 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
             }
         }
 
+        if (!empty($response['emailAddresses'])) {
+            $emails = [];
+            $dedupEmails = array_unique($response['emailAddresses'], SORT_REGULAR);
+            foreach ($dedupEmails as $address) {
+                $emails[]
+                    = ['name' => $address['name'], 'email' => $address['email']];
+            }
+            try {
+                $result['emails'] = $this->viewRenderer->partial(
+                    "Helpers/organisation-info-email-{$target}.phtml",
+                    ['emails' => $emails]
+                );
+            } catch (\Exception $e) {
+                $this->logError($e->getmessage());
+            }
+        }
+
         if (!empty($response['pictures'])) {
             $pics = [];
             foreach ($response['pictures'] as $pic) {
@@ -891,17 +912,36 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
                     $name = empty($service['name'])
                         ? $service['standardName'] : $service['name'];
                     $data = [$name];
-                    $desc = $this->cleanHtml->__invoke($service['shortDescription']);
-                    if ($desc) {
-                        $data[] = $desc;
+                    $shortDesc = $this->cleanHtml->__invoke(
+                        $service['shortDescription'], true
+                    );
+                    if ($shortDesc) {
+                        $data['shortDesc'] = $shortDesc;
                     }
-                    $allServices[] = $data;
+                    $longDesc
+                        = $this->cleanHtml->__invoke($service['description'], true);
+                    if ($longDesc) {
+                        $data['desc'] = $longDesc;
+                    }
+                    if (isset($service['type'])) {
+                        $allServices[$service['type']][] = $data;
+                    } else {
+                        $allServices[] = $data;
+                    }
                 }
             }
             if (!empty($services)) {
                 $result['services'] = $services;
             }
             if (!empty($allServices)) {
+                foreach ($allServices as &$serviceType) {
+                    usort(
+                        $serviceType,
+                        function ($service1, $service2) {
+                            return strnatcasecmp($service1[0], $service2[0]);
+                        }
+                    );
+                }
                 $result['allServices'] = $allServices;
             }
         }
@@ -974,9 +1014,6 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
 
             // Staff times
             foreach ($day['times'] as $time) {
-                if (!empty($day['info'])) {
-                    $result['info'] = $day['info'];
-                }
                 $result['opens'] = $this->formatTime($time['from']);
                 $result['closes'] = $this->formatTime($time['to']);
                 $result['selfservice'] = $time['status'] === 2 ? true : false;
@@ -992,6 +1029,9 @@ class OrganisationInfo implements \VuFind\I18n\Translator\TranslatorAwareInterfa
                'times' => $times,
                'day' => $weekDayName,
             ];
+            if (!empty($day['info'])) {
+                $scheduleData['info'] = $day['info'];
+            }
 
             if ($closed) {
                 $scheduleData['closed'] = $closed;

@@ -94,6 +94,10 @@ titleHoldBibLevels = "monograph:monographpart:serial:serialpart:collectionpart:i
 ; pickupLocationRules[] = "loc=MAIN,SUB:group=STAFF:pickup=MAINLIB,RES_SHARE:work=true"
 ;pickupLocationRules[] = ""
 
+; By default a request cannot be canceled if the item is available for pickup.
+; Uncomment this to enable canceling of available requests.
+;allowCancelingAvailableRequests = true
+
 ; The "NewUser" section defines some default values that are used when creating an account
 ; in Alma via its API. This is only relevant if you use the authentication method "AlmaDatabase"
 ; in the "Authentication" section of the "config.ini" file.
@@ -130,8 +134,8 @@ expiryDate = P10Y
 ; If not set, the purge date of the Alma user account will be empty.
 purgeDate = P11Y
 
-; Field where the identity number is stored. Default is primary id. Supported values are:
-; "primary_id", "inst_id", "note"
+; Field where the identity number is stored. Default is primary id. Supported special values are:
+; "primary_id", "inst_id", "note". Anything else is considered to be a user identifier type in Alma.
 ;identityField =
 
 ; Optional introduction texts that can be displayed on the initial email form
@@ -193,6 +197,15 @@ indexes = "868az"
 ; * can be used to denote all physical material types:
 ;hiddenProcessTypes[*] = "ACQ"
 
+; Optional link to an external interface such as Primo. Replace at least SOMETHING
+; and VIEWID with correct values.
+;externalInterfaceUrl = "https://SOMETHING.primo.exlibrisgroup.com/discovery/fulldisplay?context=L&vid=VIEWID:VU1&docid=alma%%id%%"
+
+; Set to false to disable displaying title hold button in results list
+;display_title_hold_in_results = false
+
+; Set to false to disable title hold button in holdings tab
+;display_title_hold_in_holdings = false
 
 [OnlinePayment]
 ; Whether online payment is enabled. Default is false.
@@ -217,10 +230,12 @@ method = driver
 ; emailAddress is required for the email method
 ;emailAddress =
 ; Uncomment the following lines to change which fields are included in the form.
-; Format for the fields is label:profile_field[:type]
+; Format for the fields is label:profile_field[:type][:required][:options]
 ; Default is address, zip, city, country and pin. Email and phone are included unless
 ; they have their own sections [updateEmail] or [updatePhone] defined. Also custom
 ; fields can be defined.
+; options to override defaults e.g. for preferred language may be given in the
+; format val1=label1;val2=label2...
 fields[] = "address_type:addresses[0][types]:multiselect"
 fields[] = "address_preferred:addresses[0][preferred]:boolean"
 fields[] = "Address:addresses[0][address1]"
@@ -238,6 +253,7 @@ fields[] = "Country:addresses[1][country]"
 fields[] = "Email:email"
 fields[] = "Phone:phone"
 fields[] = "self_service_pin:self_service_pin:pin4"
+fields[] = "Preferred Language:language:radio"
 ; A colon-separated list of disabled fields that can be used to remove one or more of
 ; the fields configured above (for easier centralized configuration management):
 ;disabledFields = "self_service_pin"

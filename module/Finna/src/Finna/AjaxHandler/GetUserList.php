@@ -28,8 +28,8 @@
 namespace Finna\AjaxHandler;
 
 use Finna\View\Helper\Root\UserlistEmbed;
+use Laminas\Mvc\Controller\Plugin\Params;
 use VuFind\Session\Settings as SessionSettings;
-use Zend\Mvc\Controller\Plugin\Params;
 
 /**
  * Get user list items.
@@ -76,8 +76,12 @@ class GetUserList extends \VuFind\AjaxHandler\AbstractBase
         $offset = $params->fromPost('offset', $params->fromQuery('offset'));
         $indexStart
             = $params->fromPost('indexStart', $params->fromQuery('indexStart'));
+        $view
+            = $params->fromPost('view', $params->fromQuery('view'));
+        $sort
+            = $params->fromPost('sort', $params->fromQuery('sort'));
 
-        $html = $this->helper->loadMore($id, $offset, $indexStart);
+        $html = $this->helper->loadMore($id, $offset, $indexStart, $view, $sort);
         return $this->formatResponse(compact('html'));
     }
 }

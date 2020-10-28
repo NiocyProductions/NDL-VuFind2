@@ -1,14 +1,13 @@
 <!-- START of: finna - RecordDriver/DefaultRecord/record-image.phtml -->
 <?php
   $formats = $this->driver->tryMethod('getFormats');
-  $largeImageLayout = $this->driver->getSourceIdentifier() == 'Solr' && in_array($this->driver->tryMethod('getRecordType'), ['lido', 'forward']);
   $enableImagePopupZoom = $this->record($this->driver)->getImagePopupZoom();
 ?>
 <div class="record-image-container <?= empty($images[0]['urls']['large']) && empty($images[0]['urls']['medium']) ? 'hide-image' : ''?>">
   <div class="recordcover-holder paginate" aria-hidden="true" data-format="<?=$this->transEsc(end($formats))?>" data-noimage="<?=$this->transEsc('no_image')?>">
   <?= $this->record($this->driver)->renderTemplate(
     'record-image-paginator.phtml',
-    ['images' => $images, 'type' => $type, 'largeImageLayout' => $largeImageLayout, 'formats' => $formats, 'enableImagePopupZoom' => $enableImagePopupZoom,
+    ['images' => $images, 'type' => $type, 'formats' => $formats, 'enableImagePopupZoom' => $enableImagePopupZoom,
      'numOfImages' => $numOfImages ?? null
     ]
   ); ?>
@@ -21,7 +20,7 @@
         <?php if ($this->record($this->driver)->allowRecordImageDownload()): ?>
           <?= $this->context($this)->renderInContext('RecordDriver/DefaultRecord/image-download.phtml', ['index' => $ind, 'rights' => $rights, 'image' => $image, 'hiRes' => $image['highResolution'] ?? false]) ?>
         <?php endif; ?>
-      <?= $this->context($this)->renderInContext('RecordDriver/DefaultRecord/image-rights.phtml', ['imageRightsLabel' => $imageRightsLabel, 'rights' => $rights]); ?>
+      <?= $this->context($this)->renderInContext('RecordDriver/DefaultRecord/image-rights.phtml', ['imageRightsLabel' => $imageRightsLabel, 'rights' => $rights, 'truncateLicense' => $ind === 0]); ?>
       </div>
       <?php $ind++; ?>
     <?php endforeach; ?>

@@ -27,9 +27,9 @@
  */
 namespace Finna\Db\Table;
 
+use Laminas\Db\Adapter\Adapter;
 use VuFind\Db\Row\RowGateway;
 use VuFind\Db\Table\PluginManager;
-use Zend\Db\Adapter\Adapter;
 
 /**
  * Table Definition for online payment fee
@@ -47,7 +47,7 @@ class Fee extends \VuFind\Db\Table\Gateway
      *
      * @param Adapter       $adapter Database adapter
      * @param PluginManager $tm      Table manager
-     * @param array         $cfg     Zend Framework configuration
+     * @param array         $cfg     Laminas configuration
      * @param RowGateway    $rowObj  Row prototype object (null for default)
      * @param string        $table   Name of database table to interface with
      */
@@ -73,7 +73,7 @@ class Fee extends \VuFind\Db\Table\Gateway
         $fee->user_id = $userId;
         $fee->transaction_id = $transactionId;
         $fee->title = $fine['title'] ?? '';
-        $fee->type = $fine['fine'];
+        $fee->type = mb_substr($fine['fine'], 0, 255, 'UTF-8');
         $fee->amount = $fine['balance'];
         $fee->currency = $currency;
         if (!$fee->amount) {

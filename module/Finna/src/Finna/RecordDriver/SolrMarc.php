@@ -4,7 +4,7 @@
  *
  * PHP version 7
  *
- * Copyright (C) The National Library of Finland 2014-2019.
+ * Copyright (C) The National Library of Finland 2014-2020.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -41,6 +41,7 @@ namespace Finna\RecordDriver;
 class SolrMarc extends \VuFind\RecordDriver\SolrMarc
 {
     use SolrFinnaTrait;
+    use MarcReaderTrait;
 
     /**
      * Fields that may contain subject headings, and their descriptions
@@ -62,11 +63,12 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
     /**
      * Constructor
      *
-     * @param \Zend\Config\Config $mainConfig     VuFind main configuration (omit for
-     * built-in defaults)
-     * @param \Zend\Config\Config $recordConfig   Record-specific configuration file
-     * (omit to use $mainConfig as $recordConfig)
-     * @param \Zend\Config\Config $searchSettings Search-specific configuration file
+     * @param \Laminas\Config\Config $mainConfig     VuFind main configuration (omit
+     * for built-in defaults)
+     * @param \Laminas\Config\Config $recordConfig   Record-specific configuration
+     * file (omit to use $mainConfig as $recordConfig)
+     * @param \Laminas\Config\Config $searchSettings Search-specific configuration
+     * file
      */
     public function __construct($mainConfig = null, $recordConfig = null,
         $searchSettings = null
@@ -134,6 +136,9 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
      */
     public function getAllRecordLinks()
     {
+        if (isset($this->cache[__FUNCTION__])) {
+            return $this->cache[__FUNCTION__];
+        }
         $result = parent::getAllRecordLinks();
         if ($result !== null) {
             foreach ($result as &$link) {
@@ -143,6 +148,7 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
             }
         }
 
+        $this->cache[__FUNCTION__] = $result;
         return $result;
     }
 
@@ -166,7 +172,12 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
      */
     public function getAllImages($language = 'fi', $includePdf = true)
     {
-        $getUrls = function ($pdf = false) use ($includePdf) {
+        $cacheKey = __FUNCTION__ . "/$language/" . ($includePdf ? '1' : '0');
+        if (isset($this->cache[$cacheKey])) {
+            return $this->cache[$cacheKey];
+        }
+
+        $getUrls = function ($acceptPdf) {
             $result = [];
             foreach ($this->getMarcRecord()->getFields('856') as $url) {
                 $isImage = false;
@@ -177,7 +188,7 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
                         || 'image/jpeg' == $type;
                 }
                 $address = $url->getSubfield('u');
-                $isPdf = $includePdf && preg_match('/\.pdf$/i', $address);
+                $isPdf = $acceptPdf && preg_match('/\.pdf$/i', $address);
                 if ($isImage || $isPdf) {
                     if ($address && $this->urlAllowed($address->getData())) {
                         $address = $address->getData();
@@ -200,11 +211,12 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
             return $result;
         };
 
-        $result = $getUrls();
+        $result = $getUrls(false);
         if ($includePdf && empty($result)) {
             // Attempt to find a PDF file to be converted to a coverimage
             $result = array_merge($result, $getUrls(true));
         }
+        $this->cache[$cacheKey] = $result;
         return $result;
     }
 
@@ -257,12 +269,85 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
 
                     $subfields = $this->getSubfieldArray($field, ['a', 'b']);
                     if (!empty($subfields)) {
-                        $result[$classification][] = $subfields[0];
+                        $class = $subfields[0];
+                        if ($x = $this->getSubfieldArray($field, ['x'])) {
+                            if (preg_match('/^\w/', $x[0])) {
+                                $class .= '-';
+                            }
+                            $class .= $x[0];
+                        }
+                        $result[$classification][] = $class;
                     }
                 }
             }
         }
         return $result;
+    }
+
+    /**
+     * Return the first valid DOI found in the record (false if none).
+     *
+     * @return mixed
+     */
+    public function getCleanDOI()
+    {
+        if (!isset($this->cache[__FUNCTION__])) {
+            $this->cache[__FUNCTION__] = parent::getCleanDOI();
+        }
+        return $this->cache[__FUNCTION__];
+    }
+
+    /**
+     * Get just the first listed OCLC Number (or false if none available).
+     *
+     * @return mixed
+     */
+    public function getCleanOCLCNum()
+    {
+        if (!isset($this->cache[__FUNCTION__])) {
+            $this->cache[__FUNCTION__] = parent::getCleanOCLCNum();
+        }
+        return $this->cache[__FUNCTION__];
+    }
+
+    /**
+     * Get just the first listed UPC Number (or false if none available).
+     *
+     * @return mixed
+     */
+    public function getCleanUPC()
+    {
+        if (!isset($this->cache[__FUNCTION__])) {
+            $this->cache[__FUNCTION__] = parent::getCleanUPC();
+        }
+        return $this->cache[__FUNCTION__];
+    }
+
+    /**
+     * Get just the first listed national bibliography number (or false if none
+     * available).
+     *
+     * @return mixed
+     */
+    public function getCleanNBN()
+    {
+        if (!isset($this->cache[__FUNCTION__])) {
+            $this->cache[__FUNCTION__] = parent::getCleanNBN();
+        }
+        return $this->cache[__FUNCTION__];
+    }
+
+    /**
+     * Get just the base portion of the first listed ISMN (or false if no ISSMs).
+     *
+     * @return mixed
+     */
+    public function getCleanISMN()
+    {
+        if (!isset($this->cache[__FUNCTION__])) {
+            $this->cache[__FUNCTION__] = parent::getCleanISMN();
+        }
+        return $this->cache[__FUNCTION__];
     }
 
     /**
@@ -438,7 +523,7 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
         // Try field 700 if 979 is empty
         if (!$componentParts) {
             foreach ($this->getMarcRecord()->getFields('700') as $field) {
-                if (!$field->getSubfield('t')) {
+                if ($field->getIndicator(2) != 2 || !$field->getSubfield('t')) {
                     continue;
                 }
                 $partOrderCounter++;
@@ -647,6 +732,10 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
      */
     public function getISBNs()
     {
+        if (isset($this->cache[__FUNCTION__])) {
+            return $this->cache[__FUNCTION__];
+        }
+
         $fields = [
             '020' => ['a', 'q'],
             '773' => ['z'],
@@ -660,7 +749,10 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
                 )
             );
         }
-        return array_values(array_unique(array_filter($isbn)));
+
+        $result = array_values(array_unique(array_filter($isbn)));
+        $this->cache[__FUNCTION__] = $result;
+        return $result;
     }
 
     /**
@@ -670,6 +762,10 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
      */
     public function getISSNs()
     {
+        if (isset($this->cache[__FUNCTION__])) {
+            return $this->cache[__FUNCTION__];
+        }
+
         $fields = [
             '022' => ['a']
             /* We don't want to display all ISSNs without further
@@ -693,7 +789,9 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
                 )
             );
         }
-        return array_values(array_unique(array_filter($issn)));
+        $result = array_values(array_unique(array_filter($issn)));
+        $this->cache[__FUNCTION__] = $result;
+        return $result;
     }
 
     /**
@@ -759,12 +857,16 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
                     );
                     $altSubfields = $this->stripTrailingPunctuation($altSubfields);
 
+                    $id = $field->getSubfield('0');
                     if (!empty($subfields)) {
                         $result[] = [
                             'name' => $this->stripTrailingPunctuation($subfields[0]),
                             'name_alt' => $altSubfields,
                             'date' => !empty($dates) ? $dates[0] : '',
-                            'role' => $role
+                            'role' => $role,
+                            'id' => $id ? $id->getData() : null,
+                            'type' => in_array($fieldCode, ['100', '700'])
+                                ? 'Personal Name' : 'Corporate Name'
                         ];
                     }
                 }
@@ -825,7 +927,6 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
      */
     public function getPresenters()
     {
-        global $configArray;
         $result = ['presenters' => [], 'details' => []];
 
         foreach (['100', '110', '700', '710'] as $fieldCode) {
@@ -1159,6 +1260,7 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
         $results = [];
         foreach (['130', '240'] as $fieldCode) {
             foreach ($this->getMarcRecord()->getFields($fieldCode) as $field) {
+                $subfields = [];
                 foreach ($field->getSubfields() as $subfield) {
                     $subfields[] = $subfield->getData();
                 }
@@ -1232,7 +1334,7 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
                         $data = [
                             'url' => $address, 'desc' => $desc, 'part' => $part
                         ];
-                        if (!$this->urlBlacklisted($address, $desc)
+                        if (!$this->urlBlocked($address, $desc)
                             && !in_array($data, $retVal)
                         ) {
                             $retVal[] = $data;
@@ -1257,11 +1359,73 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
         }
         // Alternatively, are there titles in 700 fields?
         foreach ($this->getMarcRecord()->getFields('700') as $field) {
-            if ($field->getSubfield('t')) {
+            if ($field->getIndicator(2) == 2 && $field->getSubfield('t')) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Get all subject headings associated with this record with extended data.
+     * (see getAllSubjectHeadings).
+     *
+     * @return array
+     */
+    public function getAllSubjectHeadingsExtended()
+    {
+        return $this->getAllSubjectHeadings(true);
+    }
+
+    /**
+     * Get all subject headings associated with this record.  Each heading is
+     * returned as an array of chunks, increasing from least specific to most
+     * specific.
+     *
+     * @param bool $extended Whether to return a keyed array with the following
+     * keys:
+     * - heading: the actual subject heading chunks
+     * - type: heading type
+     * - source: source vocabulary
+     * - id: authority id (if defined)
+     * - authType: authority type (if id is defined)
+     *
+     * @return array
+     */
+    public function getAllSubjectHeadings($extended = false)
+    {
+        $result = parent::getAllSubjectHeadings($extended);
+        if (!$extended) {
+            return $result;
+        }
+
+        $subjectIdFields = ['Personal Name' => ['600'], 'Corporate Name' => ['610']];
+        foreach ($result as &$subject) {
+            if (!$heading = $subject['heading'][0] ?? null) {
+                continue;
+            }
+            $authId = $authType = null;
+
+            // Check if we can find an authority id with a matching heading
+            foreach ($subjectIdFields as $type => $codes) {
+                foreach ($codes as $code) {
+                    foreach ($this->getMarcRecord()->getFields($code) as $field) {
+                        $subfield = $field->getSubfield('a');
+                        if (!$subfield || trim($subfield->getData()) !== $heading) {
+                            continue;
+                        }
+                        if ($authId = $field->getSubfield('0')) {
+                            $authId = $authId->getData();
+                            $authType = $type;
+                            break 3;
+                        }
+                    }
+                }
+            }
+            $subject['id'] = $authId;
+            $subject['authType'] = $authType;
+        }
+        return $result;
     }
 
     /**
@@ -1359,25 +1523,6 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
             'value' => $title,
             'link'  => $link
         ];
-    }
-
-    /**
-     * Get selected subfields from a MARC field
-     *
-     * @param \File_MARC_Data_Field $field     Field
-     * @param array                 $subfields Subfields
-     *
-     * @return string
-     */
-    protected function getFieldSubfields(\File_MARC_Data_Field $field, $subfields)
-    {
-        $result = [];
-        foreach ($field->getSubfields() as $code => $content) {
-            if (in_array($code, $subfields)) {
-                $result[] = $content->getData();
-            }
-        }
-        return implode(' ', $result);
     }
 
     /**
@@ -1484,38 +1629,6 @@ class SolrMarc extends \VuFind\RecordDriver\SolrMarc
         }
 
         return array_values(array_unique($matches, SORT_REGULAR));
-    }
-
-    /**
-     * Strip trailing spaces and punctuation characters from a string
-     *
-     * @param string|array $input      String to strip
-     * @param string       $additional Additional punctuation characters
-     *
-     * @return string|array
-     */
-    protected function stripTrailingPunctuation($input, $additional = '')
-    {
-        $array = is_array($input);
-        if (!$array) {
-            $input = [$input];
-        }
-        foreach ($input as &$str) {
-            $str = mb_ereg_replace("[\s\/:;\,=\($additional]+\$", '', $str);
-            // Don't replace an initial letter (e.g. string "Smith, A.") followed by
-            // period
-            $thirdLast = substr($str, -3, 1);
-            if (substr($str, -1) == '.' && $thirdLast != ' ') {
-                $role = in_array(
-                    substr($str, -4),
-                    ['nid.', 'sid.', 'kuv.', 'ill.', 'säv.', 'col.']
-                );
-                if (!$role) {
-                    $str = substr($str, 0, -1);
-                }
-            }
-        }
-        return $array ? $input : $input[0];
     }
 
     /**

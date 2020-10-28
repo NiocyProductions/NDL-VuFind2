@@ -1,4 +1,5 @@
 <!-- START of: finna - RecordDriver/Primo/core.phtml -->
+<?php $this->metadata()->generateMetatags($this->driver);?>
 <div vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
 
   <?php // if you have a preview tab but want to move or remove the preview link
@@ -18,6 +19,8 @@
       <?php endif; ?>
     </div>
     <h1 property="name" class="record-title"><?=$this->escapeHtml($this->driver->getShortTitle() . ' ' . $this->driver->getSubtitle() . ' ' . $this->driver->getTitleSection())?></h1>
+
+    <?=$this->render('record/labels.phtml', ['labels' => $this->driver->getRecordLabels()]); ?>
 
     <?php
       $openUrl = $this->openUrl($this->driver, 'record');

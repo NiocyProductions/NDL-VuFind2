@@ -36,7 +36,7 @@ namespace Finna\View\Helper\Root;
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org   Main Site
  */
-class CleanHtml extends \Zend\View\Helper\AbstractHelper
+class CleanHtml extends \Laminas\View\Helper\AbstractHelper
 {
     /**
      * Purifier
@@ -53,6 +53,13 @@ class CleanHtml extends \Zend\View\Helper\AbstractHelper
     protected $cacheDir;
 
     /**
+     * Current target blank setting
+     *
+     * @var boolean
+     */
+    protected $currentTargetBlank;
+
+    /**
      * Constructor
      *
      * @param string $cacheDir Cache directory
@@ -65,20 +72,27 @@ class CleanHtml extends \Zend\View\Helper\AbstractHelper
     /**
      * Clean up HTML
      *
-     * @param string $html HTML
+     * @param string  $html        HTML
+     * @param boolean $targetBlank whether to add target=_blank to outgoing links
      *
      * @return string
      */
-    public function __invoke($html)
+    public function __invoke($html, $targetBlank = false)
     {
         if (false === strpos($html, '<')) {
             return $html;
         }
-        if (null === $this->purifier) {
+        if (null === $this->purifier || $targetBlank !== $this->currentTargetBlank) {
+            $this->currentTargetBlank = $targetBlank;
             $config = \HTMLPurifier_Config::createDefault();
+            $config->set('AutoFormat.AutoParagraph', true);
             // Set cache path to the object cache
             if ($this->cacheDir) {
                 $config->set('Cache.SerializerPath', $this->cacheDir);
+            }
+            if ($targetBlank) {
+                $config->set('HTML.Nofollow', 1);
+                $config->set('HTML.TargetBlank', 1);
             }
             // Details & summary elements not supported by default, add them:
             $def = $config->getHTMLDefinition(true);
@@ -89,7 +103,10 @@ class CleanHtml extends \Zend\View\Helper\AbstractHelper
                 'Common',
                 ['open' => new \HTMLPurifier_AttrDef_HTML_Bool(true)]
             );
-            $def->addElement('summary', 'Inline', 'Inline', 'Common');
+            $def->addElement('summary', 'Block', 'Flow', 'Common');
+            $def->addAttribute('div', 'data-rows', 'Number');
+            $def->addAttribute('div', 'data-row-height', 'Number');
+            $def->addAttribute('div', 'data-label', 'Text');
             $this->purifier = new \HTMLPurifier($config);
         }
         return $this->purifier->purify($html);

@@ -69,7 +69,8 @@
   </div>
   <?php $thumbnail = ob_get_contents(); ?>
 <?php ob_end_clean(); ?>
-<?php $this->headScript()->appendFile("finna-record.js"); ?>
+
+<?php $this->metadata()->generateMetatags($this->driver);?>
 <div class="media" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
   <h1 property="name" class="record-title visible-xs"><?=$this->escapeHtml($this->driver->getShortTitle())?><?php if ($subtitle = $this->driver->getSubtitle()): ?>&nbsp;: <?=$this->escapeHtml($subtitle) ?><?php endif; ?></h1>
   <?php if ($thumbnail && $thumbnailAlignment == 'left'): ?>
@@ -188,9 +189,11 @@
         );
       ?>
       <?php if (!empty($coreFields)): ?>
-        <table class="table table-finna-record record-details">
+        <table class="table table-finna-record record-details record-details-more">
           <?=$this->record($this->driver)->renderTemplate('core-fields.phtml', ['coreFields' => $coreFields]);?>
         </table>
+        <button class="btn show-details-button hidden"><?=$this->transEsc('show_more_details');?> <i class="fa fa-arrow-down"></i></button>
+        <button class="btn hide-details-button hidden"><?=$this->transEsc('show_less_details');?> <i class="fa fa-arrow-up"></i></button>
       <?php endif; ?>
       <?/* End Main Details */?>
 

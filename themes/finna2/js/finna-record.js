@@ -299,7 +299,9 @@ finna.record = (function finnaRecord() {
       if (typeof callback === 'function') {
         callback(accordion);
       } else {
-        _toggleAccordion(accordion, true);
+        var mobile = $('.mobile-toolbar');
+        var initialLoad = mobile.length > 0 ? !mobile.is(':visible') : true;
+        _toggleAccordion(accordion, initialLoad);
       }
     }
   }
@@ -310,7 +312,6 @@ finna.record = (function finnaRecord() {
     var $tabContent = $recordTabs.find('.tab-content');
     var tabid = accordion.find('.accordion-toggle a').data('tab');
     $tabContent.insertAfter(accordion);
-
     if (accordion.hasClass('noajax') && !$recordTabs.find('.' + tabid + '-tab').length) {
       return true;
     }
@@ -318,7 +319,6 @@ finna.record = (function finnaRecord() {
     $('.record-accordions').find('.accordion.active').removeClass('active');
     accordion.addClass('active');
     $recordTabs.find('.tab-pane.active').removeClass('active');
-
     if ($recordTabs.find('.' + tabid + '-tab').length > 0) {
       $recordTabs.find('.' + tabid + '-tab').addClass('active');
       if (accordion.hasClass('initiallyActive')) {
@@ -327,27 +327,40 @@ finna.record = (function finnaRecord() {
     }
   }
 
-  function loadSimilarRecords()
+  function loadRecommendedRecords(container, method)
   {
-    if ($('.similar-records').length === 0) {
+    if (container.length === 0) {
       return;
     }
-    $.getJSON(
-      VuFind.path + '/AJAX/JSON',
-      {
-        method: 'getSimilarRecords',
-        id: $('.similar-records').data('id')
-      }
-    )
-      .done(function onGetSimilarRecordsDone(response) {
-        if (response.data.length > 0) {
-          $('.sidebar .similar-records').html(response.data);
+    var spinner = container.find('.fa-spinner').removeClass('hide');
+    var data = {
+      method: method,
+      id: container.data('id')
+    };
+    if ('undefined' !== typeof container.data('source')) {
+      data.source = container.data('source');
+    }
+    $.getJSON(VuFind.path + '/AJAX/JSON', data)
+      .done(function onGetRecordsDone(response) {
+        if (response.data.html.length > 0) {
+          container.html(response.data.html);
         }
-        $('.similar-records .fa-spinner').addClass('hidden');
+        spinner.addClass('hidden');
       })
-      .fail(function onGetSimilarRecordsFail() {
-        $('.similar-records .fa-spinner').addClass('hidden');
+      .fail(function onGetRecordsFail() {
+        spinner.addClass('hidden');
+        container.text(VuFind.translate('error_occurred'));
       });
+  }
+
+  function loadSimilarRecords()
+  {
+    loadRecommendedRecords($('.sidebar .similar-records'), 'getSimilarRecords');
+  }
+
+  function loadRecordDriverRelatedRecords()
+  {
+    loadRecommendedRecords($('.sidebar .record-driver-related-records'), 'getRecordDriverRelatedRecords');
   }
 
   function initRecordVersions(_holder) {
@@ -401,7 +414,9 @@ finna.record = (function finnaRecord() {
     applyRecordAccordionHash(initialToggle);
     $(window).on('hashchange', applyRecordAccordionHash);
     loadSimilarRecords();
+    loadRecordDriverRelatedRecords();
     initRecordVersions();
+    finna.authority.initAuthorityResultInfo();
   }
 
   var my = {

@@ -43,7 +43,8 @@ use VuFind\Exception\ILS as ILSException;
  */
 class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
     \VuFindHttp\HttpServiceAwareInterface,
-    \VuFind\I18n\Translator\TranslatorAwareInterface, \Zend\Log\LoggerAwareInterface
+    \VuFind\I18n\Translator\TranslatorAwareInterface,
+    \Laminas\Log\LoggerAwareInterface
 {
     use \VuFindHttp\HttpServiceAwareTrait;
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
@@ -69,7 +70,7 @@ class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
     /**
      * Session cache
      *
-     * @var \Zend\Session\Container
+     * @var \Laminas\Session\Container
      */
     protected $sessionCache;
 
@@ -544,6 +545,7 @@ class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
                     $renewLimit = null;
                 }
             }
+            $onsite = !empty($entry['onsite_checkout']);
 
             $transaction = [
                 'id' => $biblionumber,
@@ -558,7 +560,8 @@ class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
                 'renew' => $renewals,
                 'renewLimit' => $renewLimit,
                 'renewable' => $renewable,
-                'message' => $message
+                'message' => $message,
+                'onsite' => $onsite,
             ];
 
             $transactions[] = $transaction;
@@ -1529,7 +1532,7 @@ class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
      *
      * @param string $url Request URL
      *
-     * @return \Zend\Http\Client
+     * @return \Laminas\Http\Client
      */
     protected function createHttpClient($url)
     {
@@ -1539,7 +1542,7 @@ class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
             && !$this->config['Http']['ssl_verify_peer_name']
         ) {
             $adapter = $client->getAdapter();
-            if ($adapter instanceof \Zend\Http\Client\Adapter\Socket) {
+            if ($adapter instanceof \Laminas\Http\Client\Adapter\Socket) {
                 $context = $adapter->getStreamContext();
                 $res = stream_context_set_option(
                     $context, 'ssl', 'verify_peer_name', false
@@ -1547,7 +1550,7 @@ class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
                 if (!$res) {
                     throw new \Exception('Unable to set sslverifypeername option');
                 }
-            } elseif ($adapter instanceof \Zend\Http\Client\Adapter\Curl) {
+            } elseif ($adapter instanceof \Laminas\Http\Client\Adapter\Curl) {
                 $adapter->setCurlOption(CURLOPT_SSL_VERIFYHOST, false);
             }
         }
@@ -2138,11 +2141,14 @@ class KohaRestSuomiVuFind extends \VuFind\ILS\Driver\AbstractBase implements
      */
     protected function getItem($id)
     {
-        static $cachedRecords = [];
-        if (!isset($cachedRecords[$id])) {
-            $cachedRecords[$id] = $this->makeRequest(['v1', 'items', $id]);
+        $cacheId = "items|$id";
+        $item = $this->getCachedData($cacheId);
+        if (null === $item) {
+            $result = $this->makeRequest(['v1', 'items', $id]);
+            $item = $result;
+            $this->putCachedData($cacheId, $item, 300);
         }
-        return $cachedRecords[$id];
+        return $item ?: null;
     }
 
     /**

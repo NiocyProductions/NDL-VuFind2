@@ -12,10 +12,7 @@
     if ($listOpen) {
       $list = $this->results->getListObject();
       $listParams = [
-        'activeId' => $list['id'],
-        'activeUrl' => $this->serverUrl() . $this->url('home') . 'List/' . $list['id'],
-        'activePublic' => $list['public'],
-        'isDefaultList' => !isset($list),
+        'activeId' => $list['id'] ?? null,
         'lists' => $user ? $user->getLists() : null,
         'results' => $this->results,
         'user' => $user
@@ -69,7 +66,8 @@
       'profile' => [
         'url' => 'myresearch-profile',
         'translation' => 'Profile',
-        'show' => !$ilsOffline && $this->ils()->checkCapability('getMyProfile')
+        'show' => !$ilsOffline && $this->ils()->checkCapability('getMyProfile'),
+        'statusKey' => 'profile',
       ],
       'history' => [
         'url' => 'search-history',
@@ -135,7 +133,7 @@
       <div class="tab-title">
         <?=$this->transEsc($activeMobileTab)?>
       </div>
-      <div class="more"><?= $this->transEsc('Your Account') ?><b class="caret"></b></div>
+      <div class="more hidden-print"><?= $this->transEsc('Your Account') ?><b class="caret"></b></div>
     </div>
     <ul class="dropdown-menu">
       <?php foreach ($menuListItems as $id => $listItem) : ?>
@@ -228,9 +226,5 @@
     <?php endif; ?>
   <?php endforeach; ?>
 </ul>
-
-<script>
-    finna.menu.init();
-</script>
 
 <!-- END of: finna - myresearch/menu.phtml -->

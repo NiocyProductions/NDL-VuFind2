@@ -90,7 +90,7 @@ class Form extends \VuFind\Form\Form
     /**
      * View helper manager
      *
-     * @var \Zend\View\HelperPluginManager
+     * @var \Laminas\View\HelperPluginManager
      */
     protected $viewHelperManager = null;
 
@@ -112,11 +112,12 @@ class Form extends \VuFind\Form\Form
      * Set form id
      *
      * @param string $formId Form id
+     * @param array  $params Additional form parameters.
      *
      * @return void
      * @throws Exception
      */
-    public function setFormId($formId)
+    public function setFormId($formId, $params = [])
     {
         if (!$config = $this->getFormConfig($formId)) {
             throw new \VuFind\Exception\RecordMissing("Form '$formId' not found");
@@ -124,7 +125,7 @@ class Form extends \VuFind\Form\Form
 
         $this->formId = $formId;
         $this->formSettings = $config;
-        parent::setFormId($formId);
+        parent::setFormId($formId, $params);
         $this->setName($formId);
     }
 
@@ -169,7 +170,7 @@ class Form extends \VuFind\Form\Form
     /**
      * Set view helper manager
      *
-     * @param \Zend\View\HelperPluginManager $viewHelperManager manager
+     * @param \Laminas\View\HelperPluginManager $viewHelperManager manager
      *
      * @return void
      */
@@ -218,6 +219,26 @@ class Form extends \VuFind\Form\Form
         }
 
         return $recipients;
+    }
+
+    /**
+     * Return form email message subject.
+     *
+     * @param array $postParams Posted form data
+     *
+     * @return string
+     */
+    public function getEmailSubject($postParams)
+    {
+        if (!$recipient = $this->getRecipientFromFormData($postParams)) {
+            return parent::getEmailSubject($postParams);
+        }
+
+        // Replace posted recipient field value with label
+        $recipientField = $this->getRecipientField($this->formElementConfig);
+        $postParams[$recipientField] = $recipient['name'];
+
+        return parent::getEmailSubject($postParams);
     }
 
     /**
@@ -331,7 +352,9 @@ class Form extends \VuFind\Form\Form
                 $pre .= '<span class="datasource-info">'
                     . $this->translate($datasourceKey) . '</span>';
             }
-        } elseif ($this->institution) {
+        } elseif (!($this->formConfig['hideRecipientInfo'] ?? false)
+            && $this->institution
+        ) {
             // Receiver info
             $institution = $this->institution;
             $institutionName = $this->translate(
@@ -451,7 +474,7 @@ class Form extends \VuFind\Form\Form
     protected function getFormElementClass($type)
     {
         if ($type === 'hidden') {
-            return '\Zend\Form\Element\Hidden';
+            return '\Laminas\Form\Element\Hidden';
         }
 
         return parent::getFormElementClass($type);
@@ -503,12 +526,13 @@ class Form extends \VuFind\Form\Form
      *
      * @param string $formId Form id
      * @param array  $config Configuration
+     * @param array  $params Additional form parameters.
      *
      * @return array
      */
-    protected function parseConfig($formId, $config)
+    protected function parseConfig($formId, $config, $params)
     {
-        $elements = parent::parseConfig($formId, $config);
+        $elements = parent::parseConfig($formId, $config, $params);
 
         if (!empty($this->formConfig['hideSenderInfo'])) {
             // Remove default sender info fields
@@ -597,7 +621,7 @@ class Form extends \VuFind\Form\Form
 
         $fields = array_merge(
             $fields,
-            ['hideSenderInfo', 'sendMethod', 'senderInfoHelp']
+            ['hideRecipientInfo', 'hideSenderInfo', 'sendMethod', 'senderInfoHelp']
         );
 
         return $fields;
@@ -610,7 +634,7 @@ class Form extends \VuFind\Form\Form
      */
     protected function getFormElementSettingFields()
     {
-        $fields = parent::getFormSettingFields();
+        $fields = parent::getFormElementSettingFields();
         $fields[] = 'recipient';
 
         return $fields;

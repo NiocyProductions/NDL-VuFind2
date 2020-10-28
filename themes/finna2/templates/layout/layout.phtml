@@ -41,10 +41,7 @@
       $this->headScript()->appendFile('vendor/classList.js', 'text/javascript', ['conditional' => 'lte IE 9']);
       $this->headScript()->appendFile('vendor/html5shiv.js', 'text/javascript', ['conditional' => 'lt IE 9']);
       $this->headScript()->appendFile('vendor/respond.js', 'text/javascript', ['conditional' => 'lt IE 9']);
-      $this->headScript()->appendFile("vendor/jquery.waitforimages.min.js");
-      $finnaSurvey
-        = in_array($this->layout()->templateDir, ['search', 'record'])
-        && $this->finnaSurvey()->isEnabled();
+      $finnaSurvey = in_array($this->layout()->templateDir, ['search', 'record']) && $this->finnaSurvey()->isEnabled();
 
       if ($finnaSurvey) {
         $this->headScript()->appendFile('finna-survey.js');
@@ -53,11 +50,15 @@
     <?=$this->headLink()?>
     <?=$this->headStyle()?>
     <?php
+      // Collect small scripts together and append as one block:
+      $appendScripts = [];
+
       // Set global variables for Javascript code:
       $this->headScript()->prependScript(
-         "path = '" . rtrim($this->url('home'), '/') . "';"
-         . "module = '" . $this->layout()->templateDir . "';"
-         . "action = '" . $this->layout()->templateName . "';"
+         "var path = '" . rtrim($this->url('home'), '/') . "';"
+         . "var module = '" . $this->layout()->templateDir . "';"
+         . "var action = '" . $this->layout()->templateName . "';"
+         . 'var userIsLoggedIn = ' . ($this->auth()->isLoggedIn() ? 'true' : 'false') . ';'
       );
 
       if (!isset($this->renderingError)) {
@@ -147,13 +148,18 @@
         // Deal with cart stuff:
         $cart = $this->cart();
         if ($cart->isActive()) {
-          $this->headScript()->appendFile("vendor/cookies.js");
           $this->headScript()->appendFile("cart.js");
           $domain = $cart->getCookieDomain();
           if (!empty($domain)) {
-            $this->headScript()->appendScript(
-              'VuFind.cart.setDomain("' . $domain . '");'
-            );
+            $appendScripts[] = 'VuFind.cart.setDomain("' . $domain . '");';
+          }
+          $cookiePath = $cart->getCookiePath();
+          if (!empty($cookiePath)) {
+            $appendScripts[] = 'VuFind.cart.setCookiePath("' . $cookiePath . '");';
+          }
+          $cookieSameSite = $cart->getCookieSameSite();
+          if (null !== $cookieSameSite) {
+            $appendScripts[] = 'VuFind.cart.setCookieSameSite("' . $cookieSameSite . '");';
           }
           $this->jsTranslations()->addStrings(
             [
@@ -200,18 +206,22 @@
              }
            }
         }
-
-        $this->headScript()->prependScript(
-          'var userIsLoggedIn = ' . ($this->auth()->isLoggedIn() ? 'true' : 'false') . ';'
-        );
       }
 
       // Session keep-alive
       if ($this->keepAlive()) {
-          $this->headScript()->appendScript('var keepAliveInterval = '
-            . $this->keepAlive());
+          $appendScripts[] = 'var keepAliveInterval = ' . $this->keepAlive() . ';';
           $this->headScript()->appendFile("keep_alive.js");
       }
+
+      // Finna common
+      $cookie = $this->cookie();
+      $cookieSettings = [
+        'path' => $cookie->getCookiePath(),
+        'domain' => $cookie->getCookieDomain(),
+        'SameSite' => $cookie->getCookieSameSite(),
+      ];
+      $appendScripts[] = 'finna.common.setCookieSettings(' . json_encode($cookieSettings) . ');';
 
       // If account ajax is active, load script and add language strings
       $account = $this->auth()->getManager();
@@ -238,12 +248,12 @@
       $root = rtrim($this->url('home'), '/');
       $translations = $this->jsTranslations()->getJSON();
       $dsb = DEFAULT_SEARCH_BACKEND;
-      $setupJS = <<<JS
+      $appendScripts[] = <<<JS
 VuFind.path = '{$root}';
 VuFind.defaultSearchBackend = '{$dsb}';
 VuFind.addTranslations({$translations});
 JS;
-      $this->headScript()->appendScript($setupJS);
+      $this->headScript()->appendScript(implode("\n", $appendScripts));
     ?>
     <?=$this->headScript()?>
     <?php if ($template = $this->content()->findTemplateForLng("content/Additions/general-post-head")): ?>
@@ -266,6 +276,7 @@ JS;
           $searchId = $this->searchMemory()->getLastSearchId();
           $searchType = $this->searchMemory()->getLastSearchType();
           $lookfor = $this->searchMemory()->getLastSearchLookfor();
+          $lastSearchClassId = $this->searchMemory()->getLastSearchClassId();
 
           //parse querystring to variables
           parse_str($url, $parsed);
@@ -289,23 +300,29 @@ JS;
                 ]
             );
           } else {
-            $filters = [];
-            foreach ($parsed as $key => $filter) {
-              if (strpos($key, 'filter') !== false) {
-                //used filters to filterArray
-                foreach ($filter as $value) {
-                  $filterArray = explode(':', $value, 2);
-                  $filterKey = $filterArray[0];
-                  $filterValue = trim($filterArray[1], '"');
-                  if (array_key_exists($filterKey, $filters)) {
-                    array_push($filters[$filterKey], $filterValue);
-                  } else {
-                    $filters[$filterKey] = [$filterValue];
+            if ($this->searchClassId === $lastSearchClassId) {
+              // Init filters only when backendId has not been changed since last search
+              $filters = [];
+              foreach ($parsed as $key => $filter) {
+                if (strpos($key, 'filter') !== false) {
+                  //used filters to filterArray
+                  foreach ($filter as $value) {
+                    $filterArray = explode(':', $value, 2);
+                    $filterKey = $filterArray[0];
+                    $filterValue = trim($filterArray[1], '"');
+                    if (array_key_exists($filterKey, $filters)) {
+                      array_push($filters[$filterKey], $filterValue);
+                    } else {
+                      $filters[$filterKey] = [$filterValue];
+                    }
                   }
+                } elseif (strpos($key, 'type') !== false) {
+                  $type = explode('#', $filter)[0];
                 }
-              } elseif (strpos($key, 'type') !== false) {
-                $type = explode('#', $filter)[0];
               }
+            } else {
+              // BackendId changed since last search, reset search term
+              $lookfor = '';
             }
 
             $this->layout()->searchbox = $this->context($this)->renderInContext(
@@ -349,10 +366,10 @@ JS;
         </div>
       </div>
     </header>
-    <section role="search" class="searchContent<?=$currentTabClass?>">
+    <section aria-label="<?=$this->transEsc('Search functions')?>" class="searchContent<?=$currentTabClass?>">
       <h1 class="sr-only"><?=$this->transEsc('Search')?></h1>
         <?php if ($this->layout()->templateName === 'home' && $this->layout()->templateDir === 'search'): ?>
-            <a class="btn btn-primary btn-uppercase floating-feedback-btn hidden-xs" href="<?=$this->url('feedback-home') ?>"><?=$this->transEsc('Feedback')?></a>
+            <a class="btn btn-primary btn-uppercase floating-feedback-btn" href="<?=$this->url('feedback-home') ?>"><?=$this->transEsc('Feedback')?></a>
         <?php endif; ?>
       <?php if (!empty($this->layout()->infoMessage)): ?>
         <div class="alert alert-info street-info">
@@ -379,7 +396,7 @@ JS;
           && !empty($this->layout()->breadcrumbs)
           && $this->layout()->breadcrumbs !== false
         ): ?>
-          <nav class="breadcrumbs">
+          <nav class="breadcrumbs" aria-label="<?=$this->transEsc('Breadcrumbs') ?>">
             <div class="hidden-print">
               <ul class="breadcrumb">
                 <?php if(is_array($this->layout()->breadcrumbs)): ?>
@@ -409,6 +426,13 @@ JS;
         <?php endif; ?>
       </div>
     </div>
+    <?php if ($this->layout()->templateName === 'home' && $this->layout()->templateDir === 'search' && !$this->translationEmpty('search_bg_image_info_html')): ?>
+        <div aria-hidden="true" class="search-bg-image-info">
+          <div class="search-bg-image-info-content">
+            <?=$this->translate('search_bg_image_info_html')?>
+          </div>
+        </div>
+    <?php endif; ?>
       <?php if ($this->layout()->templateName === 'home' && $this->layout()->templateDir === 'search' && $template = $this->content()->findTemplateForLng('search/home/browsebar')): ?>
         <?=$this->render($template)?>
       <?php endif; ?>
@@ -470,6 +494,16 @@ JS;
     <?php if ($finnaSurvey): ?>
       <?=$this->finnaSurvey()->render()?>
     <?php endif; ?>
+    <?php
+      // Show post-login followup in lightbox
+      $url = $this->followup()->retrieveAndClear('postLoginLightbox', null);
+      if ($url && $this->layout()->getTemplate() !== 'layout/lightbox') {
+        $script = <<<EOT
+          finna.layout.showPostLoginLightbox('{$url}');
+EOT;
+          echo $this->inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, $script, 'SET');
+      }
+    ?>
   </body>
 </html>
 <!-- END of: finna - layout/layout.phtml -->

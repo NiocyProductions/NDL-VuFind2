@@ -4,7 +4,7 @@
  *
  * PHP version 7
  *
- * Copyright (C) The National Library of Finland 2015-2018.
+ * Copyright (C) The National Library of Finland 2015-2020.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -32,12 +32,10 @@
 namespace Finna\ILS\Driver;
 
 use DOMDocument;
-use SoapClient;
 use VuFind\Config\Locator;
 use VuFind\Date\DateException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\I18n\Translator\TranslatorAwareInterface as TranslatorAwareInterface;
-use Zend\Db\Sql\Ddl\Column\Boolean;
 
 /**
  * Axiell Web Services ILS Driver
@@ -53,7 +51,7 @@ use Zend\Db\Sql\Ddl\Column\Boolean;
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
 class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
-    implements TranslatorAwareInterface, \Zend\Log\LoggerAwareInterface,
+    implements TranslatorAwareInterface, \Laminas\Log\LoggerAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface
 {
     use \VuFindHttp\HttpServiceAwareTrait;
@@ -162,6 +160,13 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
     protected $reservations_wsdl = '';
 
     /**
+     * Wsdl file name or url for accessing the catalogue aurora section of AWS
+     *
+     * @var string
+     */
+    protected $catalogueaurora_wsdl = '';
+
+    /**
      * Path of the AWS debug log-file
      *
      * @var string
@@ -208,10 +213,22 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
      *
      * @var array
      */
-    protected $messagingBlackLists = [
+    protected $messagingFilters = [
         'pickUpNotice' => [],
         'overdueNotice' => [],
         'dueDateAlert' => []
+    ];
+
+    /**
+     * Title list mappings
+     *
+     * @var array
+     */
+    protected $titleListMapping = [
+        'new' => 'shownovelty',
+        'mostrequested' => 'mostreserved',
+        'mostborrowed' => 'mostloaned',
+        'lastreturned' => 'showlastreturned'
     ];
 
     /**
@@ -242,7 +259,7 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
     protected $soapOptions = [
         'soap_version' => SOAP_1_1,
         'exceptions' => true,
-        'trace' => 1,
+        'trace' => false,
         'connection_timeout' => 60,
         'typemap' => [
             [
@@ -259,49 +276,9 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
      *
      * @param \VuFind\Date\Converter $dateConverter Date converter object
      */
-    public function __construct(\VuFind\Date\Converter $dateConverter
-    ) {
+    public function __construct(\VuFind\Date\Converter $dateConverter)
+    {
         $this->dateFormat = $dateConverter;
-    }
-
-    /**
-     * Check if request is valid
-     *
-     * This is responsible for determining if an item is requestable
-     *
-     * @param string $id     The Bib ID
-     * @param array  $data   An Array of item data
-     * @param patron $patron An array of patron data
-     *
-     * @return bool True if request is valid, false if not
-     */
-    public function checkRequestIsValid($id, $data, $patron)
-    {
-        return true;
-    }
-
-    /**
-     * Get Patron Profile
-     *
-     * This is responsible for retrieving the profile for a specific patron.
-     *
-     * @param array $patron The patron array
-     *
-     * @throws ILSException
-     * @return array        Array of the patron's profile data on success.
-     */
-    public function getMyProfile($patron)
-    {
-        $username = $patron['cat_username'];
-        $cacheKey = $this->getPatronCacheKey($username);
-        $profile = $this->getCachedData($cacheKey);
-
-        if (null === $profile) {
-            $this->patronLogin($username, $patron['cat_password']);
-            $profile = $this->getCachedData($cacheKey);
-        }
-
-        return $profile;
     }
 
     /**
@@ -349,6 +326,13 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
         if (isset($this->config['Catalog']['loansaurora_wsdl'])) {
             $this->loansaurora_wsdl
                 = $this->getWsdlPath($this->config['Catalog']['loansaurora_wsdl']);
+        }
+
+        if (isset($this->config['Catalog']['catalogueaurora_wsdl'])) {
+            $this->catalogueaurora_wsdl
+                = $this->getWsdlPath(
+                    $this->config['Catalog']['catalogueaurora_wsdl']
+                );
         }
 
         if (isset($this->config['Catalog']['payments_wsdl'])) {
@@ -409,6 +393,7 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
 
         if (isset($this->config['Debug']['verbose'])) {
             $this->verbose = $this->config['Debug']['verbose'];
+            $this->soapOptions['trace'] = true;
         }
 
         if (isset($this->config['Debug']['log'])) {
@@ -426,20 +411,68 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
             : [];
         $this->holdingsBranchOrder = array_flip($this->holdingsBranchOrder);
 
-        $this->messagingBlackLists['pickUpNotice']
-            = isset($this->config['messagingBlackLists']['pickUpNotice'])
-            ? explode(':', $this->config['messagingBlackLists']['pickUpNotice'])
-            : [];
+        // Use new settings with fallbacks for old ones:
+        $this->messagingFilters['pickUpNotice']
+            = explode(
+                ':',
+                $this->config['messagingFilters']['pickUpNotice']
+                ?? $this->config['messagingBlackLists']['pickUpNotice']
+                ?? ''
+            );
+        $this->messagingFilters['overdueNotice']
+            = explode(
+                ':',
+                $this->config['messagingFilters']['overdueNotice']
+                ?? $this->config['messagingBlackLists']['overdueNotice']
+                ?? ''
+            );
+        $this->messagingFilters['dueDateAlert']
+            = explode(
+                ':',
+                $this->config['messagingFilters']['dueDateAlert']
+                ?? $this->config['messagingBlackLists']['dueDateAlert']
+                ?? ''
+            );
+    }
 
-        $this->messagingBlackLists['overdueNotice']
-            = isset($this->config['messagingBlackLists']['overdueNotice'])
-            ? explode(':', $this->config['messagingBlackLists']['overdueNotice'])
-            : [];
+    /**
+     * Check if request is valid
+     *
+     * This is responsible for determining if an item is requestable
+     *
+     * @param string $id     The Bib ID
+     * @param array  $data   An Array of item data
+     * @param patron $patron An array of patron data
+     *
+     * @return bool True if request is valid, false if not
+     */
+    public function checkRequestIsValid($id, $data, $patron)
+    {
+        return true;
+    }
 
-        $this->messagingBlackLists['dueDateAlert']
-            = isset($this->config['messagingBlackLists']['dueDateAlert'])
-            ? explode(':', $this->config['messagingBlackLists']['dueDateAlert'])
-            : [];
+    /**
+     * Get Patron Profile
+     *
+     * This is responsible for retrieving the profile for a specific patron.
+     *
+     * @param array $patron The patron array
+     *
+     * @throws ILSException
+     * @return array        Array of the patron's profile data on success.
+     */
+    public function getMyProfile($patron)
+    {
+        $username = $patron['cat_username'];
+        $cacheKey = $this->getPatronCacheKey($username);
+        $profile = $this->getCachedData($cacheKey);
+
+        if (null === $profile) {
+            $this->patronLogin($username, $patron['cat_password']);
+            $profile = $this->getCachedData($cacheKey);
+        }
+
+        return $profile;
     }
 
     /**
@@ -699,7 +732,7 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
      *
      * This is responsible for canceling holds.
      *
-     * @param string $cancelDetails The request details
+     * @param array $cancelDetails The request details
      *
      * @throws ILSException
      *
@@ -1383,7 +1416,7 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
             foreach ($validMethods as $methodKey) {
                 if (in_array(
                     $this->mapOldStatusToCode($methodKey),
-                    $this->messagingBlackLists[$service]
+                    $this->messagingFilters[$service] ?? []
                 )
                 ) {
                     continue;
@@ -1411,7 +1444,7 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
 
                 foreach ($sendMethods as $method) {
                     $type = isset($method->sendMethod->value)
-                        ? $this->mapCodeToStatus($method->sendMethod->value)
+                        ? $this->mapOldCodeToStatus($method->sendMethod->value)
                         : 'none';
                     if (!isset($services[$serviceType]['sendMethods'][$type])) {
                         continue;
@@ -1491,7 +1524,11 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
             ];
             if ($service === 'dueDateAlert') {
                 $options = [];
-                for ($i = 0; $i <= 5; $i++) {
+                $hasActive = false;
+                for ($i = 1; $i <= 5; $i++) {
+                    if ($i === $services[$service]['nofDays']) {
+                        $hasActive = true;
+                    }
                     $options[$i] = [
                         'name' => $this->translate(
                             1 === $i ? 'messaging_settings_num_of_days'
@@ -1500,6 +1537,9 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
                         ),
                         'active' => $i === $services[$service]['nofDays']
                     ];
+                }
+                if (!$hasActive) {
+                    $options[1]['active'] = true;
                 }
                 $settings['settings']['days_in_advance'] = [
                     'type' => 'select',
@@ -1539,7 +1579,101 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
         } else {
             $functionConfig = false;
         }
+        if ($function === 'getTitleList') {
+            if (isset($this->config['Catalog']['catalogueaurora_wsdl'])) {
+                $functionConfig = [
+                    'enabled' => true
+                ];
+            }
+        }
         return $functionConfig;
+    }
+
+    /**
+     * Function to fetch dynamic lists from Aurora
+     *
+     * @param array $params To fetch
+     *
+     * @throws ILSException
+     * @return array
+     */
+    public function getTitleList($params)
+    {
+        $conf = [
+            'arenaMember' => $this->arenaMember,
+            'pageSize' => $params['pageSize'] ?? 20,
+            'page' => isset($params['page']) ? $params['page'] - 1 : 0,
+            'query' => isset($params['query'])
+                ? $this->getDynamicMappedValue($params['query'])
+                : 'mostloaned'
+        ];
+
+        $function = 'Search';
+        $functionResult = 'searchResult';
+
+        $result = $this->doSOAPRequest(
+            $this->catalogueaurora_wsdl, $function, $functionResult, '',
+            ['searchRequest' => $conf]
+        );
+        $statusAWS = $result->$functionResult->status;
+
+        if ($statusAWS->type != 'ok') {
+            $message = $this->handleError($function, $statusAWS, '');
+            if ($message == 'ils_connection_failed') {
+                throw new ILSException($message);
+            }
+            return [];
+        }
+
+        $records = $this->objectToArray(
+            $result->$functionResult->catalogueRecords->catalogueRecord ?? []
+        );
+
+        $formatted = [
+            'records' => [],
+            'count' => $result->$functionResult->nofRecordsTotal,
+            'countPage' => $result->$functionResult->nofRecordsPage,
+            'pages' => $result->$functionResult->nofPages
+        ];
+        // Lets get a pretty list of results
+        foreach ($records as $key => $obj) {
+            $record = [
+                'id' => $obj->id ?? '0',
+                'title' => $obj->title ?? '',
+                'mediaClass' => $obj->mediaClass ?? '',
+                'icon' => $obj->mediaClassIcon ?? '',
+                'author' => $obj->author ?? '',
+                'year' => $obj->publicationYear ?? ''
+            ];
+            $formatted['records'][] = $record;
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Checks if key has a value in mapped list and returns it
+     *
+     * @param string $key to map
+     *
+     * @return string found value or key if does not exist
+     */
+    public function getDynamicMappedValue($key)
+    {
+        return $this->titleListMapping[$key] ?? $key;
+    }
+
+    /**
+     * Checks if value has a key in mapped list and returns it
+     *
+     * @param string $value to map
+     *
+     * @return string found key or value if does not exist
+     */
+    public function getDynamicMappedKey($value)
+    {
+        $found = array_search($value, $this->titleListMapping);
+        return $found ?: $value;
     }
 
     /**
@@ -1852,11 +1986,11 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
             $currentMethods = $sendMethods->sendMethods->sendMethod;
             $serviceType = $sendMethods->serviceType;
             foreach ($currentMethods as $key => $value) {
-                $method = $value->value;
-                if (in_array($method, $this->messagingBlackLists[$serviceType])) {
+                $method = is_object($value) ? $value->value : $value;
+                if (in_array($method, $this->messagingFilters[$serviceType] ?? [])) {
                     continue;
                 }
-                $current[] = $value->value;
+                $current[] = $method;
             }
             $returnable[$serviceType] = $current;
         }
@@ -1982,6 +2116,9 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
         $username = $user['cat_username'];
         $password = $user['cat_password'];
 
+        $paymentConfig = $this->config['onlinePayment'] ?? [];
+        $blockedTypes = $paymentConfig['nonPayable'] ?? [];
+
         $function = 'GetDebts';
         $functionResult = 'debtsResponse';
         $conf = [
@@ -2022,14 +2159,31 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
             } else {
                 $amount = str_replace(',', '.', $debt->debtAmountFormatted) * 100;
             }
+            $description = $debt->debtType . ' - ' . $debt->debtNote;
+            $payable = true;
+            foreach ($blockedTypes as $blockedType) {
+                if (strncmp($blockedType, '/', 1) === 0
+                    && substr_compare($blockedType, '/', -1) === 0
+                ) {
+                    if (preg_match($blockedType, $description)) {
+                        $payable = false;
+                        break;
+                    }
+                } else {
+                    if ($blockedType === $description) {
+                        $payable = false;
+                        break;
+                    }
+                }
+            }
             $fine = [
                 'debt_id' => $debt->id,
                 'amount' => $amount,
                 'checkout' => '',
-                'fine' => $debt->debtType . ' - ' . $debt->debtNote,
+                'fine' => $description,
                 'balance' => $amount,
                 'createdate' => $debt->debtDate,
-                'payableOnline' => true,
+                'payableOnline' => $payable,
                 'organization' => $debt->organisation ?? ''
             ];
             if (!empty($debt->organisation)) {
@@ -2696,7 +2850,7 @@ class AxiellWebServices extends \VuFind\ILS\Driver\AbstractBase
      */
     protected function doSOAPRequest($wsdl, $function, $functionResult, $id, $params)
     {
-        $client = new SoapClient($wsdl, $this->soapOptions);
+        $client = new ProxySoapClient($this->httpService, $wsdl, $this->soapOptions);
 
         $this->debug("$function Request for '$this->arenaMember'.'$id'");
 

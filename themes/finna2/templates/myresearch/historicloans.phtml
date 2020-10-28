@@ -39,7 +39,9 @@
       <?php if (!empty($this->transactions)): ?>
         <div class="history-controls toolbar">
           <div class="text-right hidden-print right-control">
-            <?=$this->render('search/controls/sort.phtml')?>
+            <?php if ($this->sortList): ?>
+              <?=$this->render('search/controls/sort.phtml')?>
+            <?php endif; ?>
           </div>
           <?php if ($purgeAllowed): ?>
             <div class="hidden-print left-control">
@@ -47,7 +49,7 @@
             </div>
           <?php endif; ?>
           <div class="pagination-container">
-            <?=$paginator ? $this->paginationControl($paginator, 'Sliding', 'Helpers/pagination-simple.phtml', ['params' => $this->params]) : ''?>
+            <?=$this->paginator ? $this->paginationControl($this->paginator, 'Sliding', 'Helpers/pagination-simple.phtml', ['params' => $this->params]) : ''?>
           </div>
         </div>
         <table class="myresearch-table">
@@ -130,7 +132,7 @@
           </tr>
         <?php endforeach; ?>
         </table>
-        <?=$paginator ? $this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml') : ''?>
+        <?=$this->paginator ? $this->paginationControl($this->paginator, 'Sliding', 'Helpers/pagination.phtml', ['params' => $this->params]) : ''?>
         <?php if ($template = $this->content()->findTemplateForLng("content/Additions/checkout-history-post-list")): ?>
           <div class="checkout-history-post-list"><?=$this->render($template)?></div>
         <?php endif; ?>

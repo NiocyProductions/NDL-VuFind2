@@ -1,7 +1,7 @@
 <?php
 /**
  * Default model for Solr records -- used when a more specific model based on
- * the recordtype field cannot be found.
+ * the record_format field cannot be found.
  *
  * PHP version 7
  *
@@ -30,7 +30,7 @@ namespace Finna\RecordDriver;
 
 /**
  * Default model for Solr records -- used when a more specific model based on
- * the recordtype field cannot be found.
+ * the record_format field cannot be found.
  *
  * @category VuFind
  * @package  RecordDrivers
@@ -45,11 +45,12 @@ class SolrDefault extends \VuFind\RecordDriver\SolrDefault
     /**
      * Constructor
      *
-     * @param \Zend\Config\Config $mainConfig     VuFind main configuration (omit for
-     * built-in defaults)
-     * @param \Zend\Config\Config $recordConfig   Record-specific configuration file
-     * (omit to use $mainConfig as $recordConfig)
-     * @param \Zend\Config\Config $searchSettings Search-specific configuration file
+     * @param \Laminas\Config\Config $mainConfig     VuFind main configuration (omit
+     * for built-in defaults)
+     * @param \Laminas\Config\Config $recordConfig   Record-specific configuration
+     * file (omit to use $mainConfig as $recordConfig)
+     * @param \Laminas\Config\Config $searchSettings Search-specific configuration
+     * file
      */
     public function __construct($mainConfig = null, $recordConfig = null,
         $searchSettings = null
