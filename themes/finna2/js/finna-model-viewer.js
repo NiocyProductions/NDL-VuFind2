@@ -150,14 +150,19 @@ finna.modelViewer = (function modelViewer() {
     _.renderer = new THREE.WebGLRenderer({
       antialias: true
     });
-    _.renderer.physicallyCorrectLights = true;
+    _.renderer.physicallyCorrectLights = false;
     _.renderer.gammaOutput = true;
+    _.renderer.gammaInput = true;
     _.renderer.gammaFactor = 2.2;
-    _.renderer.outputEncoding = _.encoding = THREE.sRGBEncoding;
-    _.renderer.setClearColor(0xcccccc);
+    _.renderer.toneMapping = THREE.ReinhardToneMapping;
+    _.encoding = THREE.sRGBEncoding;
+    _.renderer.outputEncoding = _.encoding;
+    
+    _.renderer.shadowMap.enabled = true;
+    _.renderer.setClearColor(0xffffff);
     _.renderer.setPixelRatio(window.devicePixelRatio);
-    _.renderer.setSize(_.size.x, _.size.x);
-    _.canvasParent.append(_.renderer.domElement);    
+    _.renderer.setSize(_.size.x, _.size.y);
+    _.canvasParent.append(_.renderer.domElement);  
   };
 
   ModelViewer.prototype.loadGLTF = function loadGLTF()
@@ -230,16 +235,17 @@ finna.modelViewer = (function modelViewer() {
         _.cameraPosition.add(_.center);
 
         _.meshMaterial = obj.material;
-
         // Reduce metalness to 0 and set cubemap as source to calculate lights
         _.meshMaterial.envMap = _.envMap;
         _.meshMaterial.metalness = 0;
         _.meshMaterial.roughness = 1;
         _.meshMaterial.depthWrite = !_.meshMaterial.transparent;
+        _.meshMaterial.bumpScale = 0.01;
 
         if (_.meshMaterial.map)_.meshMaterial.map.encoding = _.encoding;
         if (_.meshMaterial.emissiveMap) _.meshMaterial.emissiveMap.encoding = _.encoding;
-        if (_.meshMaterial.map || _.meshMaterial.emissiveMap) _.meshMaterial.needsUpdate = true;
+        if (_.meshMaterial.normalMap) _.meshMaterial.normalMap.encoding = _.encoding;
+        if (_.meshMaterial.map || _.meshMaterial.emissiveMap || _.meshMaterial.normalMap) _.meshMaterial.needsUpdate = true;
 
         // Lets get available information about the model here so we can show them properly in information screen
         var geo = obj.geometry;
@@ -248,6 +254,7 @@ finna.modelViewer = (function modelViewer() {
           _.setInformation('model-vertices', vertices);
           var triangles = +geo.index.count / 3;
           _.setInformation('model-triangles', triangles);
+          
           _.informationsArea.toggle(true);
         }
       }
@@ -257,10 +264,10 @@ finna.modelViewer = (function modelViewer() {
   ModelViewer.prototype.createLights = function createLights()
   {
     var _ = this;
-    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.6);
+    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.2);
     _.scene.add(ambientLight);
-    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 * Math.PI );
-    _.scene.add( directionalLight );
+    var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 0.6 );
+    _.scene.add( light );
   };
 
   ModelViewer.prototype.loadCubeMap = function loadCubeMap()
