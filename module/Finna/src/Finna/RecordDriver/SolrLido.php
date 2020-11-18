@@ -43,9 +43,12 @@ namespace Finna\RecordDriver;
  * @link     http://vufind.org/wiki/vufind2:record_drivers Wiki
  */
 class SolrLido extends \VuFind\RecordDriver\SolrDefault
+    implements \Laminas\Log\LoggerAwareInterface
 {
     use SolrFinnaTrait;
     use XmlReaderTrait;
+    use UrlCheckTrait;
+    use \VuFind\Log\LoggerAwareTrait;
 
     /**
      * List of undisplayable file formats
@@ -222,6 +225,10 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
             $highResolution = [];
             foreach ($resourceSet->resourceRepresentation as $representation) {
                 $linkResource = $representation->linkResource;
+                $url = (string)$linkResource;
+                if (!$this->isUrlLoadable($url, $this->getUniqueID())) {
+                    continue;
+                }
                 $attributes = $representation->attributes();
                 if (empty((string)$linkResource)) {
                     continue;
@@ -264,7 +271,6 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                     break;
                 }
 
-                $url = (string)$linkResource;
                 if (!$size) {
                     if ($urls) {
                         // We already have URL's, store them in the results first.
@@ -407,6 +413,32 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
         ) as $node) {
             if ((string)$node != $mainTitle) {
                 $results[] = (string)$node;
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Get an array of classifications for the record.
+     *
+     * @return array
+     */
+    public function getOtherClassifications()
+    {
+        $results = [];
+        foreach ($this->getXmlRecord()->xpath(
+            'lido/descriptiveMetadata/objectClassificationWrap/classificationWrap/'
+            . 'classification'
+        ) as $node) {
+            if (isset($node->term)) {
+                $term = (string)$node->term;
+                $attributes = $node->term->attributes();
+                $label = isset($attributes->label) ? $attributes->label : '';
+                if ($label) {
+                    $results[] = compact('term', 'label');
+                } else {
+                    $results[] = $term;
+                }
             }
         }
         return $results;
@@ -940,11 +972,16 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
      */
     public function getWebResource()
     {
-        $url = $this->getXmlRecord()->xpath(
+        $nodes = $this->getXmlRecord()->xpath(
             'lido/descriptiveMetadata/objectRelationWrap/relatedWorksWrap/'
             . 'relatedWorkSet/relatedWork/object/objectWebResource'
         );
-        return $url[0] ?? false;
+        if ($url = trim($nodes[0] ?? '')) {
+            if (!$this->urlBlocked($url)) {
+                return $url;
+            }
+        }
+        return false;
     }
 
     /**
