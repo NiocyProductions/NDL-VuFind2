@@ -19,16 +19,16 @@ finna.modelViewer = (function modelViewer() {
     _.fullscreen = _.controlsArea.find('.model-fullscreen');
     _.viewerStateInfo = _.root.find('.viewer-state-info');
     _.wireframeBtn = _.controlsArea.find('.model-wireframe');
-    _.informationsArea = _.root.find('.viewer-statistics');
+    _.informationsArea = _.root.find('.statistics-table');
     _.informationsArea.toggle(false);
     _.setImageTrigger();
     _.setEvents();
   }
 
-  ModelViewer.prototype.setInformation = function setInformation(element, info)
+  ModelViewer.prototype.setInformation = function setInformation(header, info)
   {
     var _ = this;
-    _.informationsArea.find('.' + element).html(info);
+    _.informationsArea.append('<tr><td class="model-header">' + header + '</td><td class="model-value">' + info + '</td></tr>');
   };
 
   ModelViewer.prototype.setEvents = function setEvents()
@@ -150,7 +150,7 @@ finna.modelViewer = (function modelViewer() {
     _.renderer = new THREE.WebGLRenderer({
       antialias: true
     });
-    _.renderer.physicallyCorrectLights = false;
+    _.renderer.physicallyCorrectLights = true;
     _.renderer.gammaOutput = true;
     _.renderer.gammaInput = true;
     _.renderer.gammaFactor = 2.2;
@@ -178,6 +178,7 @@ finna.modelViewer = (function modelViewer() {
         _.scene.background = _.envMap;
         _.center = new THREE.Vector3();
         _.cameraPosition = new THREE.Vector3(0, 40, -50);
+        console.log("Wat");
         _.setupScene();
       },
       function onLoading( xhr ) {
@@ -225,49 +226,55 @@ finna.modelViewer = (function modelViewer() {
   ModelViewer.prototype.initMesh = function initMesh()
   {
     var _ = this;
+    var vertices = 0;
+    var triangles = 0;
+    var meshes = 0;
+    var meshMaterial;
     _.scene.traverse(function traverseMeshes(obj) {
+      console.log(obj);
       if (obj.type === 'Mesh') {
+        meshes++;
         var geometry = obj.geometry;
-        geometry.center();
-        geometry.computeBoundingBox();
-        _.center = geometry.boundingBox.getCenter(new THREE.Vector3());
-        _.center = obj.localToWorld(_.center);
-        _.cameraPosition.add(_.center);
-
-        _.meshMaterial = obj.material;
+        meshMaterial = obj.material;
         // Reduce metalness to 0 and set cubemap as source to calculate lights
-        _.meshMaterial.envMap = _.envMap;
-        _.meshMaterial.metalness = 0;
-        _.meshMaterial.roughness = 1;
-        _.meshMaterial.depthWrite = !_.meshMaterial.transparent;
-        _.meshMaterial.bumpScale = 0.01;
+        meshMaterial.envMap = _.envMap;
 
-        if (_.meshMaterial.map)_.meshMaterial.map.encoding = _.encoding;
-        if (_.meshMaterial.emissiveMap) _.meshMaterial.emissiveMap.encoding = _.encoding;
-        if (_.meshMaterial.normalMap) _.meshMaterial.normalMap.encoding = _.encoding;
-        if (_.meshMaterial.map || _.meshMaterial.emissiveMap || _.meshMaterial.normalMap) _.meshMaterial.needsUpdate = true;
+        meshMaterial.depthWrite = !meshMaterial.transparent;
+        meshMaterial.bumpScale = 1;
+
+        if (meshMaterial.map) meshMaterial.map.encoding = _.encoding;
+        if (meshMaterial.emissiveMap) meshMaterial.emissiveMap.encoding = _.encoding;
+        if (meshMaterial.normalMap) meshMaterial.normalMap.encoding = _.encoding;
+        if (meshMaterial.map || meshMaterial.emissiveMap || meshMaterial.normalMap) meshMaterial.needsUpdate = true;
 
         // Lets get available information about the model here so we can show them properly in information screen
         var geo = obj.geometry;
         if (typeof geo.isBufferGeometry !== 'undefined' && geo.isBufferGeometry) {
-          var vertices = geo.attributes.position.count;
-          _.setInformation('model-vertices', vertices);
-          var triangles = +geo.index.count / 3;
-          _.setInformation('model-triangles', triangles);
+          vertices += +geo.attributes.position.count;
+          triangles += +geo.index.count / 3;
           
-          _.informationsArea.toggle(true);
         }
+        //obj.rotateX(Math.PI / 2);
       }
     });
+    console.log("Here");
+    _.informationsArea.toggle(true);
+    _.setInformation('Vertices', vertices);
+    _.setInformation('Triangles', triangles);
+    _.setInformation('Meshes', meshes);
+    _.setInformation('Format', 'gLTF 2.0');
   };
 
   ModelViewer.prototype.createLights = function createLights()
   {
     var _ = this;
-    var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.2);
+    var ambientLight = new THREE.AmbientLight( 0xFFFFFF ); // soft white light
+    //var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.2);
     _.scene.add(ambientLight);
     var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 0.6 );
     _.scene.add( light );
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    _.scene.add( directionalLight );
   };
 
   ModelViewer.prototype.loadCubeMap = function loadCubeMap()
