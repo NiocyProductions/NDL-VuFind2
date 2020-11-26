@@ -131,6 +131,28 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
     ];
 
     /**
+     * Role attributes
+     * 
+     * @var array
+     */
+    protected $roleAttributes = [
+        'elokuva-elotekija-rooli',
+        'elokuva-elonayttelija-rooli',
+        'elokuva-eloesiintyja-maare'
+    ];
+
+    /**
+     * Uncredited role attributes
+     * 
+     * @var array
+     */
+    protected $uncreditedRoleAttributes = [
+        'elokuva-elokreditoimatontekija-nimi',
+        'elokuva-elokreditoimatonnayttelija-rooli',
+        'elokuva-elokreditoimatonesiintyja-maare'
+    ];
+
+    /**
      * Record metadata
      *
      * @var array
@@ -864,15 +886,24 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
             $nameAttrs = $agent->AgentName->attributes();
             $roleName = '';
             $uncredited = false;
-            $uncreditedRole = 'elokuva-elokreditoimatonnayttelija-rooli';
-            if (!empty($nameAttrs->{'elokuva-elotekija-rooli'})) {
-                $roleName = (string)$nameAttrs->{'elokuva-elotekija-rooli'};
-            } elseif (!empty($nameAttrs->{'elokuva-elonayttelija-rooli'})) {
-                $roleName = (string)$nameAttrs->{'elokuva-elonayttelija-rooli'};
-            } elseif (!empty($nameAttrs->{$uncreditedRole})) {
-                $roleName = (string)$nameAttrs->{$uncreditedRole};
-                $uncredited = true;
-            } elseif (!empty($nameAttrs->{'elokuva-elokreditoimatontekija-nimi'})) {
+            $noRole = 'elokuva-elokreditoimatontekija-nimi';
+
+            foreach ($this->roleAttributes as $attr) {
+                if (!empty($nameAttrs->{$attr})) {
+                    $roleName = (string)$nameAttrs->{$attr};
+                    break;
+                }
+            }
+
+            foreach ($this->uncreditedRoleAttributes as $attr) {
+                if (!empty($nameAttrs->{$attr})) {
+                    $roleName = (string)$nameAttrs->{$attr};
+                    $uncredited = true;
+                    break;
+                }
+            }
+
+            if (!empty($nameAttrs->{'elokuva-elokreditoimatontekija-nimi'})) {
                 $uncredited = true;
             }
 
