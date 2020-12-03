@@ -164,7 +164,7 @@ class RecordDataFormatterFactory
             ]
         );
         $setTemplateLine(
-            'Actors', 'getAllPresenters', 'data-actors.phtml',
+            'Actors', 'getPresenters', 'data-actors.phtml',
             [
                 'context' => ['class' => 'recordPresenters']
             ]

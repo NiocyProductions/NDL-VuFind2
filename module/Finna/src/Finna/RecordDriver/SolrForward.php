@@ -606,16 +606,6 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
     }
 
     /**
-     * Get all presenters
-     *
-     * @return array
-     */
-    public function getAllPresenters()
-    {
-        return $this->getPresenters(true);
-    }
-
-    /**
      * Get credited presenters
      *
      * @return array
@@ -644,8 +634,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
     {
         $filters = [
             'a99' => [
-                'type' => 'elonet_kokoonpano',
-                'activity' => 'avustajat'
+                'type' => 'elonet_kokoonpano'
             ],
             'oth' => [
                 'type' => 'elonet_kokoonpano'
