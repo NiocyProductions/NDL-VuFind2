@@ -88,7 +88,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      * @var array
      */
     protected $presenterAuthorRelators = [
-        'e01', 'e99', 'cmm'
+        'e01', 'e99', 'cmm', 'a99', 'oth'
     ];
 
     /**
@@ -127,23 +127,27 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
         'selostaja' => 'spk',
         'valokuvaaja' => 'pht',
         'valonmääritys' => 'lgd',
-        'äänitys' => 'rce'
+        'äänitys' => 'rce',
+        'dokumentti-esiintyjä' => 'prf',
+        'kreditoimaton-dokumentti-esiintyjä' => 'prf',
+        'dokumentti-muutesiintyjät' => 'oth'
     ];
 
     /**
      * Role attributes
-     * 
+     *
      * @var array
      */
     protected $roleAttributes = [
         'elokuva-elotekija-rooli',
         'elokuva-elonayttelija-rooli',
-        'elokuva-eloesiintyja-maare'
+        'elokuva-eloesiintyja-maare',
+        'elokuva-elonayttelijakokoonpano-tehtava'
     ];
 
     /**
      * Uncredited role attributes
-     * 
+     *
      * @var array
      */
     protected $uncreditedRoleAttributes = [
@@ -338,7 +342,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      *
      * @return array
      */
-    public function getAssistants()
+    protected function getAssistants(): array
     {
         return $this->getAgentsWithActivityAttribute('elokuva-avustajat');
     }
@@ -608,12 +612,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      */
     public function getAllPresenters()
     {
-        $credited = $this->getPresenters(false);
-        $uncredited = $this->getPresenters(true);
-        if (!empty($credited['presenters']) || !empty($uncredited['presenters'])) {
-            return ['credited' => $credited, 'uncredited' => $uncredited];
-        }
-        return [];
+        return $this->getPresenters(true);
     }
 
     /**
@@ -623,7 +622,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      */
     public function getCreditedPresenters()
     {
-        return $this->getPresenters(false);
+        return $this->getPresenters()['credited'] ?? [];
     }
 
     /**
@@ -633,34 +632,98 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      */
     public function getUncreditedPresenters()
     {
-        return $this->getPresenters(true);
+        return $this->getPresenters()['uncredited'] ?? [];
     }
 
     /**
      * Get presenters
      *
-     * @param mixed $uncredited Whether to return only uncredited (true) or credited
-     * authors (false) or all (null).
-     *
      * @return array
      */
-    public function getPresenters($uncredited = null)
+    public function getPresenters(): array
     {
-        $presenters = $this->getAuthorsByRelators($this->presenterAuthorRelators);
-        if (null !== $uncredited) {
-            $result = [];
-            foreach ($presenters as $presenter) {
-                $isUncredited = isset($presenter['uncredited'])
-                    && $presenter['uncredited'];
-                if ($isUncredited === $uncredited) {
-                    $result[] = $presenter;
-                }
-            }
-            $presenters = $result;
-        }
-        return [
-            'presenters' => $presenters
+        $filters = [
+            'a99' => [
+                'type' => 'elonet_kokoonpano',
+                'activity' => 'avustajat'
+            ],
+            'oth' => [
+                'type' => 'elonet_kokoonpano'
+            ]
         ];
+        $presenters = $this->getAuthorsByRelators(
+            $this->presenterAuthorRelators, $filters
+        );
+
+        // Lets arrange the results as an assoc array with easy to read results
+        $result = [
+            'credited' => [
+                'presenters' => []
+            ],
+            'uncredited' => [
+                'presenters' => []
+            ],
+            'cast' => [
+                'presenters' => []
+            ],
+            'performer' => [
+                'presenters' => []
+            ],
+            'uncreditedPerformer' => [
+                'presenters' => []
+            ],
+            'other' => [
+                'presenters' => []
+            ],
+            'performerCast' => [
+                'presenters' => []
+            ],
+            'assistant' => [
+                'presenters' => []
+            ]
+        ];
+
+        foreach ($presenters as $presenter) {
+            $role = $presenter['role'] ?? '';
+            switch ($presenter['type']) {
+            case 'elonet_henkilo':
+                if ($role === 'act') {
+                    if (!empty($presenter['uncredited'])
+                        && $presenter['uncredited']
+                    ) {
+                        $result['uncredited']['presenters'][] = $presenter;
+                    } else {
+                        $result['credited']['presenters'][] = $presenter;
+                    }
+                } elseif ($role === 'prf') {
+                    if (!empty($presenter['uncredited'])
+                        && $presenter['uncredited']
+                    ) {
+                        $result['uncreditedPerformer']['presenters'][]
+                            = $presenter;
+                    } else {
+                        $result['performer']['presenters'][] = $presenter;
+                    }
+                }
+                break;
+            case 'elonet_kokoonpano':
+                if ($role === 'oth') {
+                    $result['performerCast']['presenters'][] = $presenter;
+                } else {
+                    $result['cast']['presenters'][] = $presenter;
+                }
+
+                break;
+            default:
+                if ($role === 'oth') {
+                    $result['other']['presenters'][] = $presenter;
+                }
+                break;
+            }
+        }
+
+        $result['assistant']['presenters'] = $this->getAssistants();
+        return $result;
     }
 
     /**
@@ -863,17 +926,19 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      * Get authors by relator codes
      *
      * @param array $relators Array of relator codes
+     * @param array $filters  Array of filter rules
      *
      * @return array
      */
-    protected function getAuthorsByRelators($relators)
+    protected function getAuthorsByRelators($relators, $filters = [])
     {
         $result = [];
         $xml = $this->getRecordXML();
         $idx = 0;
         foreach ($xml->HasAgent as $agent) {
             $relator = (string)$agent->Activity;
-            if (!in_array(strtolower($relator), $relators)) {
+            $lRelator = strtolower($relator);
+            if (!in_array($lRelator, $relators)) {
                 continue;
             }
 
@@ -881,12 +946,23 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
                 continue;
             }
 
+            $authType = (string)$agent->AgentIdentifier->IDTypeName;
+            $authId = (string)$agent->AgentIdentifier->IDTypeName . '_' .
+                (string)$agent->AgentIdentifier->IDValue;
+
+            if (!empty($filters) && in_array($lRelator, array_keys($filters))) {
+                $filter = $filters[strtolower($relator)];
+
+                if (!empty($filter['type']) && $filter['type'] !== $authType) {
+                    continue;
+                }
+            }
+
             $normalizedRelator = mb_strtoupper($relator, 'UTF-8');
             $primary = $normalizedRelator == 'D02'; // Director
             $nameAttrs = $agent->AgentName->attributes();
             $roleName = '';
             $uncredited = false;
-            $noRole = 'elokuva-elokreditoimatontekija-nimi';
 
             foreach ($this->roleAttributes as $attr) {
                 if (!empty($nameAttrs->{$attr})) {
@@ -895,11 +971,13 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
                 }
             }
 
-            foreach ($this->uncreditedRoleAttributes as $attr) {
-                if (!empty($nameAttrs->{$attr})) {
-                    $roleName = (string)$nameAttrs->{$attr};
-                    $uncredited = true;
-                    break;
+            if (empty($roleName)) {
+                foreach ($this->uncreditedRoleAttributes as $attr) {
+                    if (!empty($nameAttrs->{$attr})) {
+                        $roleName = (string)$nameAttrs->{$attr};
+                        $uncredited = true;
+                        break;
+                    }
                 }
             }
 
@@ -918,10 +996,6 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
             ) {
                 $name = (string)$nameAttrs->{'elokuva-elokreditoimatontekija-nimi'};
             }
-
-            $authType = (string)$agent->AgentIdentifier->IDTypeName;
-            $authId = (string)$agent->AgentIdentifier->IDTypeName . '_' .
-                (string)$agent->AgentIdentifier->IDValue;
 
             ++$idx;
             $result[] = [

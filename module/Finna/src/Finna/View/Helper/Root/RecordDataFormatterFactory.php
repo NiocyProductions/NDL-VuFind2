@@ -170,12 +170,6 @@ class RecordDataFormatterFactory
             ]
         );
         $setTemplateLine(
-            'Assistants', 'getAssistants', 'data-assistants.phtml',
-            [
-                'context' => ['class' => 'record-assistants']
-            ]
-        );
-        $setTemplateLine(
             'Item Description FWD', 'getGeneralNotes', 'data-forwardFields.phtml',
             [
                 'context' => ['class' => 'recordDescription']
