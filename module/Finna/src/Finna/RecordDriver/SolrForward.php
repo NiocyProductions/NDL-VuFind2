@@ -533,7 +533,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      *
      * @return array
      */
-    public function getNonPresenterAuthors($primary = null)
+    public function getNonPresenterAuthors($primary = null): array
     {
         $filters = [
             'a99' => [
@@ -711,7 +711,6 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
             }
         }
 
-        //$result['assistant']['presenters'] = $this->getAssistants();
         return $result;
     }
 
