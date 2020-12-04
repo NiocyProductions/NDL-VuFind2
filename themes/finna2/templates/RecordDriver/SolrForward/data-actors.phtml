@@ -12,10 +12,10 @@
             <?=($index > 0 ? '<br/> ' : '')?><?=$this->record($this->driver)->getAuthorityLinkElement('author', $author['name'], $author, ['date' => true, 'role' => true, 'authorityType' => $author['type'] ?? null, 'showInlineInfo' => true, 'displayRole' => 'roleName'])?>
         <?php endforeach; ?>
     <?php endif; ?>
-    <?php if (!empty($data['cast']['presenters'])): ?>
-      <div class="subheading"><?=$this->translate("ensemble_casts")?></div>
-        <?php foreach($data['cast']['presenters'] as $index => $author): ?>
-            <?=($index > 0 ? '<br/> ' : '')?><?=$this->record($this->driver)->getAuthorityLinkElement('author', $author['name'], $author, ['date' => true, 'role' => true, 'authorityType' => $author['type'] ?? null, 'showInlineInfo' => true, 'displayRole' => 'roleName'])?>
+    <?php if (!empty($data['actingEnsemble']['presenters'])): ?>
+      <div class="subheading"><?=$this->translate("acting_ensembles")?></div>
+        <?php foreach($data['actingEnsemble']['presenters'] as $index => $author): ?>
+            <?=($index > 0 ? '<br/> ' : '')?><?=$this->record($this->driver)->getAuthorityLinkElement('author', $author['name'], $author, ['date' => true, 'role' => true, 'authorityType' => $author['type'] ?? null, 'showInlineInfo' => true])?>
         <?php endforeach; ?>
     <?php endif; ?>
     <?php if (!empty($data['performer']['presenters'])): ?>
@@ -27,6 +27,12 @@
     <?php if (!empty($data['uncreditedPerformer']['presenters'])): ?>
       <div class="subheading"><?=$this->translate("uncredited_performers")?></div>
         <?php foreach($data['uncreditedPerformer']['presenters'] as $index => $author): ?>
+            <?=($index > 0 ? '<br/> ' : '')?><?=$this->record($this->driver)->getAuthorityLinkElement('author', $author['name'], $author, ['date' => true, 'role' => true, 'authorityType' => $author['type'] ?? null, 'showInlineInfo' => true, 'displayRole' => 'roleName'])?>
+        <?php endforeach; ?>
+    <?php endif; ?>
+    <?php if (!empty($data['performerEnsemble']['presenters'])): ?>
+      <div class="subheading"><?=$this->translate("performer_ensembles")?></div>
+        <?php foreach($data['performerEnsemble']['presenters'] as $index => $author): ?>
             <?=($index > 0 ? '<br/> ' : '')?><?=$this->record($this->driver)->getAuthorityLinkElement('author', $author['name'], $author, ['date' => true, 'role' => true, 'authorityType' => $author['type'] ?? null, 'showInlineInfo' => true, 'displayRole' => 'roleName'])?>
         <?php endforeach; ?>
     <?php endif; ?>

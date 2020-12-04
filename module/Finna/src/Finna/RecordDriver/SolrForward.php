@@ -164,6 +164,13 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
     protected $lazyRecordXML;
 
     /**
+     * Nonpresenter authors cache
+     *
+     * @var array
+     */
+    protected $nonPresenterAuthorsCache = null;
+
+    /**
      * Constructor
      *
      * @param \Laminas\Config\Config $mainConfig     VuFind main configuration (omit
@@ -335,16 +342,6 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
     public function getAspectRatio()
     {
         return $this->getProductionEventAttribute('elokuva-kuvasuhde');
-    }
-
-    /**
-     * Get assistants
-     *
-     * @return array
-     */
-    protected function getAssistants(): array
-    {
-        return $this->getAgentsWithActivityAttribute('elokuva-avustajat');
     }
 
     /**
@@ -538,7 +535,25 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      */
     public function getNonPresenterAuthors($primary = null)
     {
-        $authors = $this->getAuthorsByRelators($this->nonPresenterAuthorRelators);
+        $filters = [
+            'a99' => [
+                'types' => ['elonet_kokoonpano'],
+                'tags' => ['avustajat']
+            ],
+            'oth' => [
+                'types' => ['elonet_kokoonpano']
+            ],
+            'exclude' => true
+        ];
+
+        $authors = [];
+        if (null === $this->nonPresenterAuthorsCache) {
+            $this->nonPresenterAuthorsCache = $this->getAuthorsByRelators(
+                $this->nonPresenterAuthorRelators, $filters
+            );
+        }
+        $authors = $this->nonPresenterAuthorsCache;
+
         if (null === $primary) {
             return $authors;
         }
@@ -606,27 +621,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
     }
 
     /**
-     * Get credited presenters
-     *
-     * @return array
-     */
-    public function getCreditedPresenters()
-    {
-        return $this->getPresenters()['credited'] ?? [];
-    }
-
-    /**
-     * Get uncredited presenters
-     *
-     * @return array
-     */
-    public function getUncreditedPresenters()
-    {
-        return $this->getPresenters()['uncredited'] ?? [];
-    }
-
-    /**
-     * Get presenters
+     * Get presenters as an assoc array
      *
      * @return array
      */
@@ -634,11 +629,13 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
     {
         $filters = [
             'a99' => [
-                'type' => 'elonet_kokoonpano'
+                'types' => ['elonet_kokoonpano'],
+                'tags' => ['avustajat']
             ],
             'oth' => [
-                'type' => 'elonet_kokoonpano'
-            ]
+                'types' => ['elonet_kokoonpano']
+            ],
+            'exclude' => false
         ];
         $presenters = $this->getAuthorsByRelators(
             $this->presenterAuthorRelators, $filters
@@ -652,7 +649,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
             'uncredited' => [
                 'presenters' => []
             ],
-            'cast' => [
+            'actingEnsemble' => [
                 'presenters' => []
             ],
             'performer' => [
@@ -664,7 +661,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
             'other' => [
                 'presenters' => []
             ],
-            'performerCast' => [
+            'performingEnsemble' => [
                 'presenters' => []
             ],
             'assistant' => [
@@ -674,6 +671,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
 
         foreach ($presenters as $presenter) {
             $role = $presenter['role'] ?? '';
+
             switch ($presenter['type']) {
             case 'elonet_henkilo':
                 if ($role === 'act') {
@@ -697,21 +695,23 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
                 break;
             case 'elonet_kokoonpano':
                 if ($role === 'oth') {
-                    $result['performerCast']['presenters'][] = $presenter;
+                    $result['performingEnsemble']['presenters'][] = $presenter;
                 } else {
-                    $result['cast']['presenters'][] = $presenter;
+                    $result['actingEnsemble']['presenters'][] = $presenter;
                 }
 
                 break;
             default:
                 if ($role === 'oth') {
                     $result['other']['presenters'][] = $presenter;
+                } elseif ($role === 'avustajat') {
+                    $result['assistant']['presenters'][] = $presenter;
                 }
                 break;
             }
         }
 
-        $result['assistant']['presenters'] = $this->getAssistants();
+        //$result['assistant']['presenters'] = $this->getAssistants();
         return $result;
     }
 
@@ -941,8 +941,22 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
 
             if (!empty($filters) && in_array($lRelator, array_keys($filters))) {
                 $filter = $filters[strtolower($relator)];
+                $matchFound = false;
 
-                if (!empty($filter['type']) && $filter['type'] !== $authType) {
+                if (!empty($filter['types'])
+                    && in_array($authType, $filter['types'])
+                ) {
+                    $matchFound = true;
+                }
+                if (!empty($filter['tags']) && !$matchFound) {
+                    $agentAttrs = $agent->attributes();
+
+                    if (!empty($agentAttrs->{'elonet-tag'})) {
+                        $tag = (string)$agentAttrs->{'elonet-tag'};
+                        $matchFound = in_array($tag, $filter['tags']);
+                    }
+                }
+                if ($filters['exclude'] === $matchFound) {
                     continue;
                 }
             }
@@ -1620,8 +1634,7 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
             ) {
                 return null;
             }
-            if (!empty($attributes->{'elokuva-avustajat'})
-                || !empty($attributes->{'elokuva-elotuotantoyhtio'})
+            if (!empty($attributes->{'elokuva-elotuotantoyhtio'})
                 || !empty($attributes->{'elokuva-elorahoitusyhtio'})
                 || !empty($attributes->{'elokuva-elolaboratorio'})
             ) {
