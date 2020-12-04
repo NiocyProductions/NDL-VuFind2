@@ -918,7 +918,8 @@ class SolrForward extends \VuFind\RecordDriver\SolrDefault
      *
      * @return array
      */
-    protected function getAuthorsByRelators($relators, $filters = [])
+    protected function getAuthorsByRelators(array $relators, array $filters = [])
+    : array
     {
         $result = [];
         $xml = $this->getRecordXML();
