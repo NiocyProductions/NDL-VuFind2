@@ -31,7 +31,7 @@
         <?php endforeach; ?>
     <?php endif; ?>
     <?php if (!empty($data['performerEnsemble']['presenters'])): ?>
-      <div class="subheading"><?=$this->translate("performer_ensembles")?></div>
+      <div class="subheading"><?=$this->translate("performing_ensembles")?></div>
         <?php foreach($data['performerEnsemble']['presenters'] as $index => $author): ?>
             <?=($index > 0 ? '<br/> ' : '')?><?=$this->record($this->driver)->getAuthorityLinkElement('author', $author['name'], $author, ['date' => true, 'role' => true, 'authorityType' => $author['type'] ?? null, 'showInlineInfo' => true, 'displayRole' => 'roleName'])?>
         <?php endforeach; ?>
