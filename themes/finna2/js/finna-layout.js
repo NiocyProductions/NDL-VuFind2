@@ -103,10 +103,9 @@ finna.layout = (function finnaLayout() {
       truncation[index] = rowHeight[index] * rowCount;
       // truncate only if there's more than one line to hide
       if (self.height() > (truncation[index] + rowHeight[index] + 1)) {
-        var newHeight = truncation[index] - 1;
-        self.css('height', newHeight + 'px');
-        var moreLabel = self.data('label') ? self.data('label') : VuFind.translate('show_more');
-        var lessLabel = self.data('label') ? self.data('label') : VuFind.translate('show_less');
+        self.css('height', truncation[index] - 1 + 'px');
+        var moreLabel = self.data('label') || VuFind.translate('show_more');
+        var lessLabel = self.data('label') || VuFind.translate('show_less');
 
         self.on('showmore.finna', function showMore() {
           var _ = $(this);
@@ -150,8 +149,7 @@ finna.layout = (function finnaLayout() {
           self.after([moreLink, lessLink]);
           topLink.hide();
         }
-        $('.less-link').hide();
-
+        lessLink.hide();
         self.addClass('truncated');
       }
     });
