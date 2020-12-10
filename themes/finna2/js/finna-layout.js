@@ -77,12 +77,6 @@ finna.layout = (function finnaLayout() {
   function initTruncate(_holder) {
     var holder = typeof _holder === 'undefined' ? $(document) : _holder;
 
-    function notifyTruncateChange(field) {
-      field.find('.truncate-change span').each(function setupTruncateChange(ind, e) {
-        $(e).trigger('truncate-change');
-      });
-    }
-
     var truncation = [];
     var rowHeight = [];
     holder.find('.truncate-field').not('.truncate-done').each(function handleTruncate(index) {
@@ -104,10 +98,7 @@ finna.layout = (function finnaLayout() {
         rowHeight[index] = parseFloat(self.css('line-height').replace('px', ''));
       }
 
-      var rowCount = 3;
-      if (self.data('rows')) {
-        rowCount = self.data('rows');
-      }
+      var rowCount = self.data('rows') || 3;
       // get the line-height of first element to determine each text line height
       truncation[index] = rowHeight[index] * rowCount;
       // truncate only if there's more than one line to hide
@@ -116,39 +107,55 @@ finna.layout = (function finnaLayout() {
         self.css('height', newHeight + 'px');
         var moreLabel = self.data('label') ? self.data('label') : VuFind.translate('show_more');
         var lessLabel = self.data('label') ? self.data('label') : VuFind.translate('show_less');
-        self.before('<button type="button" class="less-link-top">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
-        self.after('<button type="button" class="more-link">' + moreLabel + ' <i class="fa fa-arrow-down" aria-hidden="true"></i></button><button type="button" class="less-link">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
-        $('.less-link-top').hide();
+
+        self.on('showmore', function showMore() {
+          var _ = $(this);
+          _.siblings('.more-link').hide();
+          _.siblings('.less-link').show();
+          _.css('height', 'auto');
+          if (_.height() > (rowHeight[index] * 30)) {
+            _.siblings('.less-link-top').show();
+          }
+        });
+
+        self.on('showless', function showLess() {
+          var _ = $(this);
+          _.siblings('.less-link-top, .less-link').hide();
+          _.siblings('.more-link').show();
+          _.css('height', truncation[index] - 1 + 'px');   
+        });
+
+        var topLink = $('<button type="button" class="less-link-top">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
+        var moreLink = $('<button type="button" class="more-link">' + moreLabel + ' <i class="fa fa-arrow-down" aria-hidden="true"></i></button>');
+        var lessLink = $('<button type="button" class="less-link">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
+
+        var linkClass = self.data('link-class') || '';
+
+        if (linkClass) {
+          topLink.addClass(linkClass);
+          moreLink.addClass(linkClass);
+          lessLink.addClass(linkClass);
+        }
+
+        $(moreLink).add(topLink).on('click', function showMore() {
+          self.trigger('showmore');
+        });
+
+        $(lessLink).on('click', function showLess() {
+          self.trigger('showless');
+        });
+
+        if (self.data('link-placement') === 'top') {
+          self.before([moreLink, lessLink]);
+        } else {
+          self.before(topLink);
+          self.after([moreLink, lessLink]);
+          $(topLink).hide();
+        }
         $('.less-link').hide();
 
-        self.nextAll('.more-link').first().click(function onClickMoreLink(/*event*/) {
-          $(this).hide();
-          $(this).next('.less-link').show();
-          $(this).prev('.truncate-field').css('height', 'auto');
-          if (self.height() > (rowHeight[index] * 30)) {
-            $(this).siblings('.less-link-top').show();
-          }
-          notifyTruncateChange(self);
-        });
-
-        self.prevAll('.less-link-top').first().click(function onClickLessLink(/*event*/) {
-          $(this).hide();
-          $(this).siblings('.less-link').hide();
-          $(this).siblings('.more-link').show();
-          $(this).nextAll('.truncate-field').first().css('height', truncation[index] - 1 + 'px');
-          notifyTruncateChange(self);
-        });
-        self.nextAll('.less-link').first().click(function onClickLessLink(/*event*/) {
-          $(this).hide();
-          $(this).siblings('.less-link-top').hide();
-          $(this).prev('.more-link').show();
-          $(this).prevAll('.truncate-field').first().css('height', truncation[index] - 1 + 'px');
-          notifyTruncateChange(self);
-        });
         self.addClass('truncated');
       }
-      notifyTruncateChange(self);
-      self.trigger('truncate-done', [self]);
     });
   }
 
