@@ -135,7 +135,6 @@
         <!-- adjust this -->
         <?php if (!empty($onlineURLs) || !empty($mergedData['urls'])): ?>
           <?php
-            // we need the count of links before we can continue
             $finalUrls = !empty($mergedData['urls']) ? $mergedData['urls'] : $onlineURLs;
             $finalUrls = array_filter($finalUrls, function ($url) use ($renderedURLs) {
               return !in_array($url['url'], $renderedURLs);
