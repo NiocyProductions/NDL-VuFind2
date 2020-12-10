@@ -108,20 +108,18 @@ finna.layout = (function finnaLayout() {
         var lessLabel = self.data('label') || VuFind.translate('show_less');
 
         self.on('showmore.finna', function showMore() {
-          var _ = $(this);
-          _.siblings('.more-link').hide();
-          _.siblings('.less-link').show();
-          _.css('height', 'auto');
-          if (_.height() > (rowHeight[index] * 30)) {
-            _.siblings('.less-link-top').show();
+          self.siblings('.more-link').hide();
+          self.siblings('.less-link').show();
+          self.css('height', 'auto');
+          if (self.height() > (rowHeight[index] * 30)) {
+            self.siblings('.less-link-top').show();
           }
         });
 
         self.on('showless.finna', function showLess() {
-          var _ = $(this);
-          _.siblings('.less-link-top, .less-link').hide();
-          _.siblings('.more-link').show();
-          _.css('height', truncation[index] - 1 + 'px');   
+          self.siblings('.less-link-top, .less-link').hide();
+          self.siblings('.more-link').show();
+          self.css('height', truncation[index] - 1 + 'px');   
         });
 
         var topLink = $('<button type="button" class="less-link-top">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
@@ -129,7 +127,6 @@ finna.layout = (function finnaLayout() {
         var lessLink = $('<button type="button" class="less-link">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
         
         var linkClass = self.data('link-class') || '';
-
         if (linkClass) {
           topLink.addClass(linkClass);
           moreLink.addClass(linkClass);
