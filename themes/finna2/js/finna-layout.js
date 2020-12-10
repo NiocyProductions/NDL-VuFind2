@@ -103,6 +103,7 @@ finna.layout = (function finnaLayout() {
       truncation[index] = rowHeight[index] * rowCount;
       // truncate only if there's more than one line to hide
       if (self.height() > (truncation[index] + rowHeight[index] + 1)) {
+        var topLink = self.height() > (rowHeight[index] * 30);
         self.css('height', truncation[index] - 1 + 'px');
         var moreLabel = self.data('label') || VuFind.translate('show_more');
         var lessLabel = self.data('label') || VuFind.translate('show_less');
@@ -111,42 +112,38 @@ finna.layout = (function finnaLayout() {
           self.siblings('.more-link').hide();
           self.siblings('.less-link').show();
           self.css('height', 'auto');
-          if (self.height() > (rowHeight[index] * 30)) {
-            self.siblings('.less-link-top').show();
-          }
         });
 
         self.on('showless.finna', function showLess() {
-          self.siblings('.less-link-top, .less-link').hide();
+          self.siblings('.less-link').hide();
           self.siblings('.more-link').show();
           self.css('height', truncation[index] - 1 + 'px');   
         });
 
-        var topLink = $('<button type="button" class="less-link-top">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
         var moreLink = $('<button type="button" class="more-link">' + moreLabel + ' <i class="fa fa-arrow-down" aria-hidden="true"></i></button>');
         var lessLink = $('<button type="button" class="less-link">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
         
         var linkClass = self.data('link-class') || '';
         if (linkClass) {
-          topLink.addClass(linkClass);
           moreLink.addClass(linkClass);
           lessLink.addClass(linkClass);
         }
         moreLink.on('click', function showMore() {
           self.trigger('showmore');
         });
-        lessLink.add(topLink).on('click', function showLess() {
+        lessLink.on('click', function showLess() {
           self.trigger('showless');
         });
+        lessLink.hide();
 
         if (self.data('link-placement') === 'top') {
           self.before([moreLink, lessLink]);
         } else {
-          self.before(topLink);
+          if (topLink) {
+            self.before(lessLink.clone(true));
+          }
           self.after([moreLink, lessLink]);
-          topLink.hide();
         }
-        lessLink.hide();
         self.addClass('truncated');
       }
     });
