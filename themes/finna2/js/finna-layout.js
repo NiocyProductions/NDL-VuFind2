@@ -137,11 +137,11 @@ finna.layout = (function finnaLayout() {
           lessLink.addClass(linkClass);
         }
 
-        $(moreLink).add(topLink).on('click', function showMore() {
+        $(moreLink).on('click', function showMore() {
           self.trigger('showmore');
         });
 
-        $(lessLink).on('click', function showLess() {
+        $(lessLink).add(topLink).on('click', function showLess() {
           self.trigger('showless');
         });
 
