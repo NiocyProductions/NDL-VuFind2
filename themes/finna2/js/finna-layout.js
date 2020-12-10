@@ -108,7 +108,7 @@ finna.layout = (function finnaLayout() {
         var moreLabel = self.data('label') ? self.data('label') : VuFind.translate('show_more');
         var lessLabel = self.data('label') ? self.data('label') : VuFind.translate('show_less');
 
-        self.on('showmore', function showMore() {
+        self.on('showmore.finna', function showMore() {
           var _ = $(this);
           _.siblings('.more-link').hide();
           _.siblings('.less-link').show();
@@ -118,7 +118,7 @@ finna.layout = (function finnaLayout() {
           }
         });
 
-        self.on('showless', function showLess() {
+        self.on('showless.finna', function showLess() {
           var _ = $(this);
           _.siblings('.less-link-top, .less-link').hide();
           _.siblings('.more-link').show();
