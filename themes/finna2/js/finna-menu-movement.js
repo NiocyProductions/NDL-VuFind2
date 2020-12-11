@@ -31,7 +31,7 @@ FinnaMovement.prototype.setEvents = function setEvents() {
   var _ = this;
   _.menuRootElement.on('reindex.finna', function reIndex() {
     _.setChildData();
-    _.setChildClickListeners();
+    _.setInputClickEvents();
     _.setFocusTo();
   });
   _.menuRootElement.on('focusout', function setFocusOut(e) {
@@ -42,7 +42,7 @@ FinnaMovement.prototype.setEvents = function setEvents() {
   _.menuRootElement.on('keydown', function detectKeyPress(e) {
     _.checkKey(e);
   });
-  _.setChildClickListeners();
+  _.setInputClickEvents();
 };
 
 /**
@@ -55,7 +55,10 @@ FinnaMovement.prototype.reset = function reset() {
   _.childOffset = -1;
 };
 
-FinnaMovement.prototype.setChildClickListeners = function setChildClickListeners() {
+/**
+ * Sets a click listener for input elements so offset tracks it properly
+ */
+FinnaMovement.prototype.setInputClickEvents = function setInputClickEvents() {
   var _ = this;
   var setOffset = function setOffset(e) {
     _.offset = e.data.i;
