@@ -31,6 +31,7 @@ FinnaMovement.prototype.setEvents = function setEvents() {
   var _ = this;
   _.menuRootElement.on('reindex.finna', function reIndex() {
     _.setChildData();
+    _.setChildClickListeners();
     _.setFocusTo();
   });
   _.menuRootElement.on('focusout', function setFocusOut(e) {
@@ -41,6 +42,7 @@ FinnaMovement.prototype.setEvents = function setEvents() {
   _.menuRootElement.on('keydown', function detectKeyPress(e) {
     _.checkKey(e);
   });
+  _.setChildClickListeners();
 };
 
 /**
@@ -51,6 +53,16 @@ FinnaMovement.prototype.reset = function reset() {
   _.offsetCache = _.offset;
   _.offset = 0;
   _.childOffset = -1;
+};
+
+FinnaMovement.prototype.setChildClickListeners = function setChildClickListeners() {
+  var _ = this;
+  var setOffset = function setOffset(e) {
+    _.offset = e.data.i;
+  };
+  for (var i = 0; i < _.menuElements.length; i++) {
+    _.menuElements[i].input.off('click.finna').on('click.finna', {i: i}, setOffset);
+  }
 };
 
 /**
