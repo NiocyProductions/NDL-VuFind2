@@ -111,7 +111,7 @@ finna.layout = (function finnaLayout() {
         var moreLink = $('<button type="button" class="more-link">' + moreLabel + ' <i class="fa fa-arrow-down" aria-hidden="true"></i></button>');
         var lessLink = $('<button type="button" class="less-link">' + lessLabel + ' <i class="fa fa-arrow-up" aria-hidden="true"></i></button>');
         
-        var linkClass = self.data('link-class') || '';
+        var linkClass = self.data('button-class') || '';
         if (linkClass) {
           moreLink.addClass(linkClass);
           lessLink.addClass(linkClass);
@@ -128,7 +128,7 @@ finna.layout = (function finnaLayout() {
         });
         lessLink.hide();
 
-        if (self.data('link-placement') === 'top') {
+        if (self.data('button-placement') === 'top') {
           self.before([moreLink, lessLink]);
         } else {
           if (topLink) {

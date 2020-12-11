@@ -141,7 +141,7 @@
             });
             $count = count($finalUrls);
           ?>
-          <div class="merged-urls-wrapper truncate-field" data-link-class="link-buttons" data-row-height="1" data-link-placement="top" data-label="<?=$this->transEsc('links_from_other_organisations', ['%%count%%' => $count])?>">
+          <div class="merged-urls-wrapper truncate-field" data-button-class="link-buttons" data-row-height="1" data-button-placement="top" data-label="<?=$this->transEsc('links_from_other_organisations', ['%%count%%' => $count])?>">
             <?php foreach ($finalUrls as $url): ?>
               <div class="fulltextField"><a class="fulltext" href="<?=$this->escapeHtmlAttr($this->proxyUrl($url['url'])) ?>" target="_blank" aria-label="<?=$this->escapeHtmlAttr($this->translate('external_online_link'))?>"><i class="fa fa-external-link"></i> <?=!empty($url['text']) ? $this->transEsc('default::link_' . $url['text'], null, $url['text']) : $this->escapeHtml($this->truncateUrl($url['url'])) ?></a>
                 <?php if (!empty($url['part'])): ?> <span class="coverage"><?=$this->transEsc('default::link_' . $url['part'], null, $url['part']) ?><?php endif; ?>
