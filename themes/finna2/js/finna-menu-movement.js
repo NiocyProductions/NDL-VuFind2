@@ -50,7 +50,7 @@ FinnaMovement.prototype.setFocusTo = function setFocusTo() {
   var _ = this;
   if (_.indexCache !== -1) {
     var element = _.getMenuItem(_.menuElements, 0, _.indexCache);
-    element.input.focus();
+    element.focus();
   }
 };
 
@@ -67,11 +67,11 @@ FinnaMovement.prototype.setChildData = function setChildData() {
   var nodes = _.menuRootElement[0].querySelectorAll(FOCUSABLE_ELEMENTS);
   var children = [].slice.apply(nodes);
   var formedObjects = [];
-  children.forEach(function testEach(element) {
-    var obj = {input: $(element), parent: undefined};
-    obj.input.attr('tabindex', (i === 0) ? '0' : '-1');
-    obj.input.data('index', i++);
-    formedObjects.push(obj);
+  children.forEach(function createElement(element) {
+    var input = $(element);
+    input.attr('tabindex', (i === 0) ? '0' : '-1');
+    input.data('index', i++);
+    formedObjects.push(input);
   });
   _.menuElements = formedObjects;
 };
@@ -91,8 +91,8 @@ FinnaMovement.prototype.checkKey = function checkKey(e) {
   case _.keys.right:
   case _.keys.space:
     var element = _.getMenuItem(_.menuElements, 0);
-    if (!element.input.is('input')) {
-      element.input.trigger('togglesubmenu');
+    if (!element.is('input')) {
+      element.trigger('togglesubmenu');
       e.preventDefault();
     }
     break;
@@ -111,11 +111,11 @@ FinnaMovement.prototype.checkKey = function checkKey(e) {
  */
 FinnaMovement.prototype.moveMainmenu = function moveMainmenu(dir) {
   var _ = this;
-  var current = _.getMenuItem(_.menuElements, dir);
-  if (current.input.is(':hidden')) {
+  var element = _.getMenuItem(_.menuElements, dir);
+  if (element.is(':hidden')) {
     _.moveMainmenu(dir);
   } else {
-    current.input.focus();
+    element.focus();
   }
 };
 
@@ -129,16 +129,16 @@ FinnaMovement.prototype.moveMainmenu = function moveMainmenu(dir) {
  */
 FinnaMovement.prototype.getMenuItem = function getMenuItem(elements, direction, cacheIndex) {
   var _ = this;
-  var currentIndex = typeof cacheIndex === 'undefined' ? $(':focus').data('index') : cacheIndex;
-  var tryToFind = +currentIndex + direction;
+  var currentIndex = cacheIndex || $(':focus').data('index');
+  var newIndex = +currentIndex + direction;
 
-  if (tryToFind > elements.length - 1) {
-    tryToFind = 0;
-  } else if (tryToFind < 0) {
-    tryToFind = elements.length - 1;
+  if (newIndex > elements.length - 1) {
+    newIndex = 0;
+  } else if (newIndex < 0) {
+    newIndex = elements.length - 1;
   }
-  _.indexCache = tryToFind;
-  return elements[tryToFind];
+  _.indexCache = newIndex;
+  return elements[newIndex];
 };
 
 finna.finnaMovement = (function finnaMovement() {
