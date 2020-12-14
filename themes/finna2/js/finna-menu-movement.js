@@ -49,7 +49,7 @@ FinnaMovement.prototype.reset = function reset() {
 FinnaMovement.prototype.setFocusTo = function setFocusTo() {
   var _ = this;
   if (_.indexCache !== -1) {
-    var element = _.getMenuItem(_.menuElements, 0, _.indexCache);
+    var element = _.getMenuItem(0, _.indexCache);
     element.focus();
   }
 };
@@ -90,7 +90,7 @@ FinnaMovement.prototype.checkKey = function checkKey(e) {
   case _.keys.left:
   case _.keys.right:
   case _.keys.space:
-    var element = _.getMenuItem(_.menuElements, 0);
+    var element = _.getMenuItem(0);
     if (!element.is('input')) {
       element.trigger('togglesubmenu');
       e.preventDefault();
@@ -111,7 +111,7 @@ FinnaMovement.prototype.checkKey = function checkKey(e) {
  */
 FinnaMovement.prototype.moveMainmenu = function moveMainmenu(dir) {
   var _ = this;
-  var element = _.getMenuItem(_.menuElements, dir);
+  var element = _.getMenuItem(dir);
   if (element.is(':hidden')) {
     _.moveMainmenu(dir);
   } else {
@@ -123,22 +123,21 @@ FinnaMovement.prototype.moveMainmenu = function moveMainmenu(dir) {
  * Function to calculate desired index, array of elements, dir. Optionally you can use cacheIndex to 
  * get certain element
  * 
- * @param {Array} elements
  * @param {int} direction
  * @param {int} cacheIndex
  */
-FinnaMovement.prototype.getMenuItem = function getMenuItem(elements, direction, cacheIndex) {
+FinnaMovement.prototype.getMenuItem = function getMenuItem(direction, cacheIndex) {
   var _ = this;
   var currentIndex = cacheIndex || $(':focus').data('index');
   var newIndex = +currentIndex + direction;
 
-  if (newIndex > elements.length - 1) {
+  if (newIndex > _.menuElements.length - 1) {
     newIndex = 0;
   } else if (newIndex < 0) {
-    newIndex = elements.length - 1;
+    newIndex = _.menuElements.length - 1;
   }
   _.indexCache = newIndex;
-  return elements[newIndex];
+  return _.menuElements[newIndex];
 };
 
 finna.finnaMovement = (function finnaMovement() {
