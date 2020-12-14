@@ -90,17 +90,15 @@ FinnaMovement.prototype.checkKey = function checkKey(e) {
     break;
   case _.keys.left:
   case _.keys.right:
-    _.openSubmenu();
-    break;
-  case _.keys.down:
-    _.moveMainmenu(1);
-    e.preventDefault();
-    break;
   case _.keys.space:
     if (!_.getMenuItem(_.menuElements, 0).input.is('input')) {
       _.openSubmenu();
       e.preventDefault();
     }
+    break;
+  case _.keys.down:
+    _.moveMainmenu(1);
+    e.preventDefault();
     break;
   }
 };
@@ -130,7 +128,8 @@ FinnaMovement.prototype.openSubmenu = function openSubmenu() {
 };
 
 /**
- * Function to calculate desired index, given the old offset, array of elements and dir
+ * Function to calculate desired index, array of elements, dir. Optionally you can use cacheIndex to 
+ * get certain element
  * 
  * @param {Array} elements
  * @param {int} direction
