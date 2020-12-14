@@ -41,7 +41,6 @@ FinnaMovement.prototype.setEvents = function setEvents() {
 FinnaMovement.prototype.reset = function reset() {
   var _ = this;
   _.indexCache = -1;
-  _.elementsLengthCache = -1;
 };
 
 /**
