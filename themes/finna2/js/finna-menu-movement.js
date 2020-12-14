@@ -90,8 +90,9 @@ FinnaMovement.prototype.checkKey = function checkKey(e) {
   case _.keys.left:
   case _.keys.right:
   case _.keys.space:
-    if (!_.getMenuItem(_.menuElements, 0).input.is('input')) {
-      _.openSubmenu();
+    var element = _.getMenuItem(_.menuElements, 0);
+    if (!element.input.is('input')) {
+      element.input.trigger('togglesubmenu');
       e.preventDefault();
     }
     break;
@@ -116,14 +117,6 @@ FinnaMovement.prototype.moveMainmenu = function moveMainmenu(dir) {
   } else {
     current.input.focus();
   }
-};
-
-/**
- * Try to trigger submenu open call
- */
-FinnaMovement.prototype.openSubmenu = function openSubmenu() {
-  var _ = this;
-  _.getMenuItem(_.menuElements, 0).input.trigger('togglesubmenu');
 };
 
 /**
