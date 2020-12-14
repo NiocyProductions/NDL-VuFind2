@@ -36,14 +36,6 @@ FinnaMovement.prototype.setEvents = function setEvents() {
 };
 
 /**
- * Reset the internal pointers of movement handler
- */
-FinnaMovement.prototype.reset = function reset() {
-  var _ = this;
-  _.indexCache = -1;
-};
-
-/**
  * Function to refocus to cached element
  */
 FinnaMovement.prototype.setFocusTo = function setFocusTo() {
