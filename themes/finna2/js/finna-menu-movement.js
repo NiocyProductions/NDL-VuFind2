@@ -120,7 +120,7 @@ FinnaMovement.prototype.moveMainmenu = function moveMainmenu(dir) {
 };
 
 /**
- * Function to calculate desired index, array of elements, dir. Optionally you can use cacheIndex to 
+ * Function to fetch wanted element from menuElement with dir. Optionally you can use cacheIndex to 
  * get certain element
  * 
  * @param {int} direction
