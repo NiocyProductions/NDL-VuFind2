@@ -159,7 +159,7 @@
                     <?=$this->record($resource)->getFormatList() ?>
                     <br/>
                   <?php endif; ?>
-                  <?php $listAuthor = $resource->getPrimaryAuthor(); if (!empty($listAuthor)): ?>
+                  <?php $listAuthor = $listAuthor = $resource->getPrimaryAuthorForSearch(); if (!empty($listAuthor)): ?>
                     <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($listAuthor)?></a><br/>
                   <?php endif; ?>
 
