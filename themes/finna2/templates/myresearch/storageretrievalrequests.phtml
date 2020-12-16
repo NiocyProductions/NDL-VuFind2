@@ -125,7 +125,6 @@
                     <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($display ?? $listAuthor)?></a><br/>
                   <?php endif; ?>
 
-
                   <?php if (isset($ilsDetails['volume']) && !empty($ilsDetails['volume'])): ?>
                     <strong><?=$this->transEsc('Volume')?>:</strong> <?=$this->escapeHtml($ilsDetails['volume'])?>
                     <br />
