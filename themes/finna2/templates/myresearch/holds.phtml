@@ -129,8 +129,12 @@
                         <br/>
                       <?php endif; ?>
 
-                      <?php $listAuthor = $resource->getPrimaryAuthorForSearch(); if (!empty($listAuthor)): ?>
-                        <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($listAuthor)?></a><br/>
+                      <?php
+                        $listAuthor = $resource->getPrimaryAuthorForSearch();
+                        $display = $resource->getPrimaryAuthor();
+                        if (!empty($listAuthor)):
+                      ?>
+                        <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($display ?? $listAuthor)?></a><br/>
                       <?php endif; ?>
 
                       <?php if (isset($ilsDetails['volume']) && !empty($ilsDetails['volume'])): ?>

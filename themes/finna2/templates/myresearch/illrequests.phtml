@@ -113,8 +113,12 @@
                 }
               ?>
               <div class="record-core-metadata">
-                <?php $listAuthor = $resource->getPrimaryAuthorForSearch(); if (!empty($listAuthor)): ?>
-                  <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($listAuthor)?></a><br/>
+                <?php
+                  $listAuthor = $resource->getPrimaryAuthorForSearch();
+                  $display = $resource->getPrimaryAuthor();
+                  if (!empty($listAuthor)):
+                ?>
+                  <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($display ?? $listAuthor)?></a><br/>
                 <?php endif; ?>
 
                 <?php $formats = $resource->getFormats(); if (count($formats) > 0): ?>
