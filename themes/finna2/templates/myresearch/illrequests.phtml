@@ -118,7 +118,7 @@
                   $display = $resource->getPrimaryAuthor();
                   if (!empty($listAuthor)):
                 ?>
-                  <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($display ?? $listAuthor)?></a><br/>
+                  <a href="<?=$this->record($resource)->getLink('author', $listAuthor)?>"><?=$this->escapeHtml($display ?: $listAuthor)?></a><br/>
                 <?php endif; ?>
 
                 <?php $formats = $resource->getFormats(); if (count($formats) > 0): ?>
