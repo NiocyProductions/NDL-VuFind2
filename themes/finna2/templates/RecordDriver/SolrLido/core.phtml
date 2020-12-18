@@ -2,9 +2,6 @@
 <?php
   $params = $this->searchMemory()->getLastSearchParams($this->searchClassId);
   $img = $this->recordImage($this->record($this->driver));
-  $images = $img->getAllImagesAsCoverLinks(
-      $this->layout()->userLang, $params
-  );
 
   $urls = $this->record($this->driver)->getLinkDetails();
   if (!empty($urls)){
@@ -40,7 +37,7 @@
 
     <?php if ($this->resolver('record/record-organisation-menu.phtml') && $this->driver->getSourceIdentifier() == 'Solr'): ?>
       <div class="organisation-menu">
-          <?=$this->render('record/record-organisation-menu.phtml') ?>
+        <?=$this->render('record/record-organisation-menu.phtml') ?>
       </div>
     <?php endif; ?>
 

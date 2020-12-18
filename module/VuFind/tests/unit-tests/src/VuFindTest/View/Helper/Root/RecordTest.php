@@ -44,6 +44,8 @@ use VuFindTheme\ThemeInfo;
  */
 class RecordTest extends \PHPUnit\Framework\TestCase
 {
+    use \VuFindTest\Unit\FixtureTrait;
+
     /**
      * Theme to use for testing purposes.
      *
@@ -59,7 +61,7 @@ class RecordTest extends \PHPUnit\Framework\TestCase
     public function testMissingTemplate()
     {
         $this->expectException(\Laminas\View\Exception\RuntimeException::class);
-        $this->expectExceptionMessage('Cannot find RecordDriver/AbstractBase/core.phtml template for class: VuFind\\RecordDriver\\SolrMarc');
+        $this->expectExceptionMessage('Cannot find RecordDriver/[brief class name]/core.phtml for class VuFind\\RecordDriver\\SolrMarc or any of its parent classes');
 
         $record = $this->getRecord($this->loadRecordFixture('testbug1.json'));
         $record->getView()->resolver()->expects($this->at(0))->method('resolve')
@@ -68,6 +70,21 @@ class RecordTest extends \PHPUnit\Framework\TestCase
         $record->getView()->expects($this->any())->method('render')
             ->will($this->throwException(new RuntimeException('boom')));
         $record->getCoreMetadata();
+    }
+
+    /**
+     * Test attempting to display a template that does not exist without throwing an
+     * exception.
+     *
+     * @return void
+     */
+    public function testMissingTemplateWithoutException()
+    {
+        $record = $this->getRecord($this->loadRecordFixture('testbug1.json'));
+        $this->assertEquals(
+            '',
+            $record->renderTemplate('foo', [], false)
+        );
     }
 
     /**
@@ -82,7 +99,7 @@ class RecordTest extends \PHPUnit\Framework\TestCase
             ->with($this->equalTo('RecordDriver/SolrMarc/collection-record.phtml'))
             ->will($this->returnValue(false));
         $this->setSuccessTemplate(
-            $record, 'RecordDriver/SolrDefault/collection-record.phtml', 'success', 1, 3
+            $record, 'RecordDriver/SolrDefault/collection-record.phtml', 'success', 1, 2
         );
         $this->assertEquals('success', $record->getCollectionBriefRecord());
     }
@@ -196,7 +213,7 @@ class RecordTest extends \PHPUnit\Framework\TestCase
         $record->getView()->resolver()->expects($this->at(0))->method('resolve')
             ->will($this->returnValue(false));
         $this->setSuccessTemplate(
-            $record, 'RecordDriver/AbstractBase/list-entry.phtml', 'success', 1, 3
+            $record, 'RecordDriver/AbstractBase/list-entry.phtml', 'success', 1, 2
         );
         $this->assertEquals('success', $record->getListEntry(null, $user));
     }
@@ -616,14 +633,7 @@ class RecordTest extends \PHPUnit\Framework\TestCase
      */
     protected function loadRecordFixture($file)
     {
-        $json = json_decode(
-            file_get_contents(
-                realpath(
-                    VUFIND_PHPUNIT_MODULE_PATH . '/fixtures/misc/' . $file
-                )
-            ),
-            true
-        );
+        $json = $this->getJsonFixture('misc/' . $file);
         $record = new \VuFind\RecordDriver\SolrMarc();
         $record->setRawData($json['response']['docs'][0]);
         return $record;
