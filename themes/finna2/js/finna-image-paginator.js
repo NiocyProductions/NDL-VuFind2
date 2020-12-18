@@ -6,13 +6,9 @@ var defaults = {
   recordId: 0,
   iconlabelClass: 'default-icon',
   maxRows: 3,
-  imagesPerPage: 8,
-  imagesOnMobile: 6,
-  imagesOnPopup: 10,
-  imagesOnNormal: 8,
-  imagesPerRow: 8,
   enableImageZoom: false,
   recordType: 'default-type',
+  triggerClick: 'modal', // [modal, open, none]
   leaflet: {
     offsetPercentage: 4
   }
@@ -45,11 +41,12 @@ function FinnaPaginator(element, images, settings) {
   _.trigger.attr('data-images', '');
   _.trigger.attr('data-settings', '');
   _.track = _.covers.find('.finna-element-track');
-  
+
   // Popup object to keep track of required settings
   _.popup = {
     track: undefined,
   };
+  _.root.removeClass('paginate');
   _.setMaxImages();
   
   // Needed references
@@ -57,6 +54,7 @@ function FinnaPaginator(element, images, settings) {
   _.moreBtn = null;
   _.lessBtn = null;
   _.pagerInfo = null;
+  _.creditLine = null;
   _.leftBtn = null;
   _.rightBtn = null;
   _.leftBrowseBtn = null;
@@ -66,11 +64,6 @@ function FinnaPaginator(element, images, settings) {
   _.canvasElements = {};
   _.openImageIndex = 0;
   _.imagePopup = $(imageElement).clone();
-
-  if (settings.recordType === 'marc') {
-    settings.imagesOnPopup = 4;
-  }
-
   _.init();
 }
 
@@ -136,7 +129,6 @@ FinnaPaginator.prototype.init = function init() {
     _.covers.addClass('mini-paginator');
     _.covers.siblings('.recordcovers-more').first().hide();
   }
-  _.root.removeClass('paginate');
 };
 
 /**
@@ -154,12 +146,12 @@ FinnaPaginator.prototype.setReferences = function setReferences() {
   _.leftBrowseBtn = _.root.find('.next-image.left');
   _.rightBrowseBtn = _.root.find('.next-image.right');
   _.pagerInfo = _.settings.isList ? _.covers.find('.paginator-info') : _.trigger.find('.paginator-info');
-
+  _.creditLine = _.trigger.find('.image-credit-line');
   if (_.images.length < 2) {
     _.covers.hide();
     _.pagerInfo.hide();
   }
-  if (_.images.length < _.settings.imagesPerRow) {
+  if (_.images.length <= _.settings.imagesPerRow) {
     $('.recordcovers-more').hide();
   }
   _.leftBrowseBtn.off('click').click(function browseLeft() {
@@ -269,6 +261,7 @@ FinnaPaginator.prototype.onNonZoomableClick = function onNonZoomableClick(image)
   _.setCanvasElement('noZoom');
   _.setCurrentVisuals();
   _.setPagerInfo(true);
+  _.setCreditLine(image.data('credit-line'));
   if (typeof _.settings.onlyImage === 'undefined' || _.settings.onlyImage === false) {
     _.loadImageInformation();
   }
@@ -292,6 +285,7 @@ FinnaPaginator.prototype.onLeafletImageClick = function onLeafletImageClick(imag
 
   _.setCanvasElement('leaflet');
   _.setPagerInfo();
+  _.setCreditLine(image.data('credit-line'));
   _.setCurrentVisuals();
 
   _.leafletHolder.eachLayer(function removeLayers(layer) {
@@ -369,6 +363,28 @@ FinnaPaginator.prototype.onLeafletImageClick = function onLeafletImageClick(imag
     _.setZoomButtons();
   };
   _.setBrowseButtons();
+};
+
+/**
+ * Function to update the credit line
+ */
+FinnaPaginator.prototype.setCreditLine = function setCreditLine(credits) {
+  var _ = this;
+  if (!credits) {
+    _.creditLine.addClass('hidden');
+    return;
+  }
+
+  if (_.popup.creditLine) {
+    _.popup.creditLine.text(credits);
+    _.popup.creditLine.removeClass('hidden');
+    return;
+  }
+
+  if (_.creditLine) {
+    _.creditLine.text(credits);
+    _.creditLine.removeClass('hidden');
+  }
 };
 
 /**
@@ -479,7 +495,9 @@ FinnaPaginator.prototype.setRecordIndex = function setRecordIndex() {
   if (typeof _.popup.pagerInfo !== 'undefined') {
     var total = $('.paginationSimple .total').html();
     var current = +$('.paginationSimple .index').html() + $.fn.finnaPopup.getCurrent('paginator');
-    _.popup.pagerInfo.siblings('.record-index').find('.total').html(current + " / " + total);
+    if (current && total) {
+      _.popup.pagerInfo.siblings('.record-index').find('.total').html(current + " / " + total);
+    }
   }
 };
 
@@ -494,7 +512,6 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
   var img = _.trigger.find('img');
   img.attr('data-src', imagePopup.attr('href'));
   img.attr('alt', imagePopup.data('alt'));
-
   if (_.openImageIndex !== imagePopup.attr('index')) {
     img.css('opacity', 0.5);
   }
@@ -526,7 +543,7 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
   }
 
   if (!_.settings.isList) {
-    $('.image-details-container').addClass('hidden');
+    $('.image-details-container').hide();
     var details = $('.image-details-container[data-img-index="' + imagePopup.attr('index') + '"]');
     details.removeClass('hidden');
     var license = details.find('.truncate-field, .copyright');
@@ -538,7 +555,7 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
   }
   _.imageDetail.html(imagePopup.data('description'));
   img.unveil(100, function handleLoading() {
-    $(this).on('load', function handleImage() {
+    $(this).off('load').on('load', function handleImage() {
       setImageProperties(this);
     });
   });
@@ -830,6 +847,7 @@ FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   _.popup.rightBrowseBtn = popup.find('.next-image.right');
   _.popup.summary = popup.find('.imagepopup-holder .summary');
   _.popup.covers.removeClass('mini-paginator');
+  _.popup.creditLine = popup.find('.credit-line');
   if (_.images.length < 2) {
     _.popup.covers.parent().hide();
   }
