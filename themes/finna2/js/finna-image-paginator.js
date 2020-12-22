@@ -260,7 +260,7 @@ FinnaPaginator.prototype.onNonZoomableClick = function onNonZoomableClick(image)
 
   _.setCanvasElement('noZoom');
   _.setCurrentVisuals();
-  _.setPagerInfo(true);
+  _.setPagerInfo();
   _.setCreditLine(image.data('credit-line'));
   if (typeof _.settings.onlyImage === 'undefined' || _.settings.onlyImage === false) {
     _.loadImageInformation();
@@ -284,9 +284,9 @@ FinnaPaginator.prototype.onLeafletImageClick = function onLeafletImageClick(imag
   }
 
   _.setCanvasElement('leaflet');
+  _.setCurrentVisuals();
   _.setPagerInfo();
   _.setCreditLine(image.data('credit-line'));
-  _.setCurrentVisuals();
 
   _.leafletHolder.eachLayer(function removeLayers(layer) {
     _.leafletHolder.removeLayer(layer);
@@ -372,6 +372,9 @@ FinnaPaginator.prototype.setCreditLine = function setCreditLine(credits) {
   var _ = this;
   if (!credits) {
     _.creditLine.addClass('hidden');
+    if (_.popup.creditLine) {
+      _.popup.creditLine.addClass('hidden');
+    }
     return;
   }
 
@@ -430,7 +433,6 @@ FinnaPaginator.prototype.setPopupImageState = function setPopupImageState(type) 
       e.preventDefault();
       _.onNonZoomableClick($(this));
     });
-    _.setCanvasElement('noZoom');
     break;
   case 'leaflet':
     _.imagePopup.off('click').on('click', function onImageClick(e){
@@ -449,11 +451,11 @@ FinnaPaginator.prototype.setPopupImageState = function setPopupImageState(type) 
       maxBoundsViscosity: 0,
       bounceAtZoomLimits: false
     });
-    _.setCanvasElement('leaflet');
     break;
   default:
     break;
   }
+  _.setCanvasElement(type);
 };
 
 /**
@@ -461,19 +463,21 @@ FinnaPaginator.prototype.setPopupImageState = function setPopupImageState(type) 
  */
 FinnaPaginator.prototype.setButtons = function setButtons() {
   var _ = this;
-  _.rightBtn.prop('disabled', _.images.length <= _.settings.imagesPerPage || _.offSet === _.images.length - 1);
-  _.leftBtn.prop('disabled', _.images.length <= _.settings.imagesPerPage || _.offSet < 1);
+  var lessImages = _.images.length <= _.settings.imagesPerPage;
+  var lastImage = _.offSet === _.images.length - 1;
+  var firstImage = _.offSet < 1;
+  _.rightBtn.prop('disabled', lessImages || lastImage);
+  _.leftBtn.prop('disabled', lessImages || firstImage);
 
-  if (typeof _.popup.rightBtn !== 'undefined' && _.popup.leftBtn !== 'undefined') {
-    _.popup.rightBtn.prop('disabled', _.images.length <= _.settings.imagesPerPage || _.offSet === _.images.length - 1);
-    _.popup.leftBtn.prop('disabled', _.images.length <= _.settings.imagesPerPage || _.offSet < 1);
+  if (_.popup.rightBtn && _.popup.leftBtn) {
+    _.popup.rightBtn.prop('disabled', lessImages || lastImage);
+    _.popup.leftBtn.prop('disabled', lessImages || firstImage);
   }
 };
 
 /**
  * Function to set correct info for page info, for popup prepend text with image
  *
- * @param {boolean} isPopup
  */
 FinnaPaginator.prototype.setPagerInfo = function setPagerInfo() {
   var _ = this;
@@ -481,10 +485,10 @@ FinnaPaginator.prototype.setPagerInfo = function setPagerInfo() {
   var advanced = translations.image + ' ' + imageIndex + ' / ' + _.images.length;
   var plain = imageIndex + ' / ' + _.images.length;
 
-  if (typeof _.popup.pagerInfo !== 'undefined') {
+  if (_.popup.pagerInfo) {
     _.popup.pagerInfo.find('.image-index').html(advanced);
   }
-  _.pagerInfo.find('.image-index').html(_.settings.isList ? plain : advanced);
+  _.pagerInfo.find('.image-index').html(plain);
 };
 
 /**
@@ -492,10 +496,11 @@ FinnaPaginator.prototype.setPagerInfo = function setPagerInfo() {
  */
 FinnaPaginator.prototype.setRecordIndex = function setRecordIndex() {
   var _ = this;
-  if (typeof _.popup.pagerInfo !== 'undefined') {
-    var total = $('.paginationSimple .total').html();
-    var current = +$('.paginationSimple .index').html() + $.fn.finnaPopup.getCurrent('paginator');
-    if (current && total) {
+  if (_.popup.pagerInfo) {
+    var paginationSimple = $('.paginationSimple').first();
+    var total = paginationSimple.find('.total').html();
+    var current = +paginationSimple.find('.index').html() + $.fn.finnaPopup.getCurrent('paginator');
+    if (current && total && _.popup.pagerInfo) {
       _.popup.pagerInfo.siblings('.record-index').find('.total').html(current + " / " + total);
     }
   }
@@ -515,13 +520,12 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
   if (_.openImageIndex !== imagePopup.attr('index')) {
     img.css('opacity', 0.5);
   }
-
   function setImageProperties(image) {
     $(image).css('opacity', '');
     _.setDimensions();
     if (image.naturalWidth && image.naturalWidth === 10 && image.naturalHeight === 10) {
       _.trigger.addClass('no-image').trigger('removeclick');
-      $(image).attr('alt', translations.no_cover);
+      $(image).attr('alt', '');
       if (_.settings.isList) {
         if (_.images.length < 2) {
           _.settings.enableImageZoom = false;
@@ -537,8 +541,11 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
         $('.large-image-sidebar').addClass('visible-xs visible-sm');
         $('.record-main').addClass('mainbody left');
       }
-    } else if (_.trigger.hasClass('no-image')) {
-      _.trigger.removeClass('no-image');
+    } else {
+      if (_.trigger.hasClass('no-image')) {
+        _.trigger.removeClass('no-image');
+      }
+      _.setCreditLine(imagePopup.data('credit-line'));
     }
   }
 
@@ -554,11 +561,11 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
     }
   }
   _.imageDetail.html(imagePopup.data('description'));
-  img.unveil(100, function handleLoading() {
-    $(this).off('load').on('load', function handleImage() {
-      setImageProperties(this);
-    });
+  _.setCreditLine('');
+  img.off('load').on('load', function handleImage() {
+    setImageProperties(this);
   });
+  img.unveil(100);
 };
 
 /**
@@ -571,7 +578,6 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
  */
 FinnaPaginator.prototype.loadPage = function loadPage(direction, openImageIndex, imagesPerPage) {
   var _ = this;
-
   _.clearTracks();
 
   if (typeof imagesPerPage !== 'undefined') {
@@ -593,10 +599,11 @@ FinnaPaginator.prototype.loadPage = function loadPage(direction, openImageIndex,
   if (lastImage > _.images.length - 1) {
     lastImage = _.images.length - 1;
     _.offSet = lastImage;
+  } else if (lastImage < 0) {
+    lastImage = 0;
   }
 
   var firstImage = lastImage - max;
-
   if (firstImage < 1) {
     _.offSet = 0;
     firstImage = 0;
@@ -652,25 +659,24 @@ FinnaPaginator.prototype.loadImageInformation = function loadImageInformation() 
   if (typeof listId !== 'undefined') {
     src += '&listId=' + listId;
   }
-  $('.collapse-content-holder').html('<div class="large-spinner"><i class="fa fa-spinner fa-spin"/></div>');
+  _.popup.collapseArea.html('<div class="large-spinner"><i class="fa fa-spinner fa-spin"/></div>');
   $.ajax({
     url: src,
     dataType: 'html'
   }).done( function setImageData(response) {
-    $('.collapse-content-holder').html(JSON.parse(response).data.html);
+    _.popup.collapseArea.html(JSON.parse(response).data.html);
     _.setDimensions();
     if (_.settings.recordType === 'marc') {
       _.loadBookDescription();
     } else {
-      finna.layout.initTruncate($('.finna-popup'));
+      finna.layout.initTruncate(_.popup.collapseArea);
       $('.imagepopup-holder .summary').removeClass('loading');
     }
     VuFind.lightbox.bind('.imagepopup-holder');
     if (typeof $('.open-link a').attr('href') !== 'undefined') {
       _.setDimensions();
     }
-    var collapseArea = $('.finna-popup .collapse-content-holder');
-    collapseArea.find('[data-embed-video]').each(function initVideo() {
+    _.popup.collapseArea.find('[data-embed-video]').each(function initVideo() {
       var videoSources = $(this).data('videoSources');
       var scripts = $(this).data('scripts');
       var posterUrl = $(this).data('posterUrl');
@@ -694,7 +700,7 @@ FinnaPaginator.prototype.loadImageInformation = function loadImageInformation() 
       });
     });
 
-    collapseArea.find('[data-embed-iframe]').each(function setIframes() {
+    _.popup.collapseArea.find('[data-embed-iframe]').each(function setIframes() {
       var source = $(this).is('a') ? $(this).attr('href') : $(this).data('link');
       $(this).finnaPopup({
         id: 'popupiframe',
@@ -723,7 +729,7 @@ FinnaPaginator.prototype.loadImageInformation = function loadImageInformation() 
     }
     _.setRecordIndex();
   }).fail( function setImageDataFailure() {
-    $('.collapse-content-holder').html('');
+    _.popup.collapseArea.html('');
     _.setRecordIndex();
   });
 };
@@ -774,7 +780,8 @@ FinnaPaginator.prototype.createImagePopup = function createImagePopup(image) {
     'data-largest': image.largest,
     'data-description': image.description,
     'href': (!_.settings.isList && _.settings.enableImageZoom) ? image.largest : image.medium,
-    'data-alt': image.alt
+    'data-alt': image.alt,
+    'data-credit-line': image.creditLine
   });
 
   return holder;
@@ -796,22 +803,26 @@ FinnaPaginator.prototype.setCurrentVisuals = function setCurrentVisuals() {
  */
 FinnaPaginator.prototype.setMaxImages = function setMaxImages() {
   var _ = this;
-  // Check the track width for declaring the amount of images
+
   if (_.images.length <= 1) {
+    _.settings.imagesPerPage = _.settings.imagesPerRow = _.images.length;
     return;
   }
-  var popupOpen = typeof _.popup.track !== 'undefined';
-  var images = Math.round((popupOpen ? _.popup.track.width() : _.track.width()) / (popupOpen ? 96 : 64));
-  _.settings.imagesPerRow = images;
-  _.settings.imagesPerPage = _.settings.imagesPerRow;
+
+  if (!_.popup.track && _.settings.isList) {
+    _.settings.imagesPerPage = _.settings.imagesPerRow = 1;
+    return;
+  }
+  var images = Math.round((_.popup.track ? _.popup.track.width() : _.track.width()) / (_.popup.track ? 96 : 64));
+  _.settings.imagesPerPage = _.settings.imagesPerRow = images;
 };
 
 /**
  * Function to set image dimensions to download image link
  */
 FinnaPaginator.prototype.setDimensions = function setDimensions() {
-  var popupHidden = !$.fn.finnaPopup.isOpen();
-  var container = popupHidden ? $('.image-details-container').not('.hidden') : $('.image-information-holder');
+  var _ = this;
+  var container = _.popup.collapseArea ? _.popup.collapseArea : $('.image-details-container').not('.hidden');
   var openLink = container.find('.open-link a, .display-image a').attr('href');
   if (typeof openLink !== 'undefined') {
     var img = new Image();
@@ -831,7 +842,7 @@ FinnaPaginator.prototype.setDimensions = function setDimensions() {
 /**
  * Lets create a popup object to handle images properly
  * 
- * @param {HTMLElement} popup
+ * @param {jQuery} popup
  */
 FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   var _ = this;
@@ -847,10 +858,8 @@ FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   _.popup.rightBrowseBtn = popup.find('.next-image.right');
   _.popup.summary = popup.find('.imagepopup-holder .summary');
   _.popup.covers.removeClass('mini-paginator');
-  _.popup.creditLine = popup.find('.credit-line');
-  if (_.images.length < 2) {
-    _.popup.covers.parent().hide();
-  }
+  _.popup.creditLine = popup.find('.image-credit-line');
+  _.popup.collapseArea = popup.find('.collapse-content-holder');
   _.canvasElements = {
     leaflet: popup.find('.leaflet-map-image'),
     noZoom: popup.find('.popup-nonzoom'),
@@ -858,6 +867,9 @@ FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   };
   _.canvasElements.leaflet.attr('id', 'leaflet-map-image');
   _.canvasElements.video.attr('id', 'video-player');
+  if (_.images.length < 2) {
+    _.popup.covers.parent().hide();
+  }
   popup.toggleClass('nonzoomable', !_.settings.enableImageZoom);
 
   _.popup.leftBtn.off('click').on('click', function loadImages(){
@@ -866,22 +878,12 @@ FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   _.popup.rightBtn.off('click').on('click', function loadImages(){
     _.loadPage(1);
   });
-  _.popup.leftBrowseBtn.off('click').click(function browseLeft() {
+  _.popup.leftBrowseBtn.off('click').on('click', function browseLeft() {
     _.onBrowseButton(-1);
   });
-  _.popup.rightBrowseBtn.off('click').click(function browseRight() {
+  _.popup.rightBrowseBtn.off('click').on('click', function browseRight() {
     _.onBrowseButton(1);
   });
-};
-
-/**
- * Clear the popup object from memory, so the flow continues properly
- */
-FinnaPaginator.prototype.removePopupObject = function removePopupObject() {
-  var _ = this;
-  if (typeof _.popup.track !== 'undefined') {
-    _.popup = {};
-  }
 };
 
 /**
@@ -892,11 +894,22 @@ FinnaPaginator.prototype.setTrigger = function setTrigger(imagePopup) {
   _.changeTriggerImage(imagePopup);
   _.openImageIndex = imagePopup.attr('index');
   _.setBrowseButtons(_.settings.isList);
-  _.setPagerInfo(false);
+  _.setPagerInfo();
   _.setCurrentVisuals();
+  _.setCreditLine(imagePopup.data('credit-line'));
   var modal = $('#imagepopup-modal').find('.imagepopup-holder').clone();
 
-  _.trigger.not('[data-disable-modal="1"]').finnaPopup({
+  if (_.settings.triggerClick === 'none') {
+    var noneTrigger = $('<span class="image-popup-trigger"></span>');
+    _.trigger.children().appendTo(noneTrigger);
+    _.trigger.replaceWith(noneTrigger);
+    _.trigger = noneTrigger;
+    return;
+  } else if (_.settings.triggerClick === 'open') {
+    return;
+  }
+
+  _.trigger.finnaPopup({
     modal: modal,
     id: 'paginator',
     translations: translations,
@@ -906,19 +919,17 @@ FinnaPaginator.prototype.setTrigger = function setTrigger(imagePopup) {
       if (!_.settings.isList) {
         toggleButtons(_.moreBtn, _.lessBtn);
       }
-      
       _.createPopupObject(popup.content);
       _.setPopupImageState(_.settings.enableImageZoom ? 'leaflet' : 'noZoom');
       _.setMaxImages();
       _.loadPage(0, _.openImageIndex);
-      
       var foundImage = _.findSmallImage(_.openImageIndex);
       _.openImageIndex = null;
       foundImage.click();
       _.setBrowseButtons();
     },
     onPopupClose: function onPopupClose() {
-      _.removePopupObject();
+      _.popup = {};
       _.imagePopup.off('click').on('click', function setTriggerEvents(e){
         e.preventDefault();
         _.setTrigger($(this));
@@ -942,13 +953,13 @@ FinnaPaginator.prototype.setTrigger = function setTrigger(imagePopup) {
 FinnaPaginator.prototype.setZoomButtons = function setZoomButtons() {
   var _ = this;
   _.zoomButtonState();
-  $('.zoom-in').off('click').click(function zoomIn() {
+  $('.zoom-in').off('click').on('click', function zoomIn() {
     _.leafletHolder.setZoom(_.leafletHolder.getZoom() + 1);
   });
-  $('.zoom-out').off('click').click(function zoomOut() {
+  $('.zoom-out').off('click').on('click', function zoomOut() {
     _.leafletHolder.setZoom(_.leafletHolder.getZoom() - 1);
   });
-  $('.zoom-reset').off('click').click(function zoomReset() {
+  $('.zoom-reset').off('click').on('click', function zoomReset() {
     _.leafletHolder.flyToBounds(_.leafletStartBounds, {animate: false});
   });
   $('.zoom-in, .zoom-out, .zoom-reset').off('dblclick').on('dblclick', function preventPropagation(e){
@@ -965,11 +976,9 @@ FinnaPaginator.prototype.setZoomButtons = function setZoomButtons() {
  */
 FinnaPaginator.prototype.zoomButtonState = function zoomButtonState() {
   var _ = this;
-  var min = _.leafletHolder.getMinZoom();
-  var max = _.leafletHolder.getMaxZoom();
   var cur = _.leafletHolder.getZoom();
-  $('.zoom-out').toggleClass('inactive', cur === min);
-  $('.zoom-in').toggleClass('inactive', cur === max);
+  $('.zoom-out').toggleClass('inactive', cur === _.leafletHolder.getMinZoom());
+  $('.zoom-in').toggleClass('inactive', cur === _.leafletHolder.getMaxZoom());
 };
 
 /**
@@ -994,7 +1003,7 @@ FinnaPaginator.prototype.setListTrigger = function setListTrigger(image) {
  */
 FinnaPaginator.prototype.findSmallImage = function findSmallImage(index) {
   var _ = this;
-  return (typeof _.popup.track !== 'undefined') ?
+  return _.popup.track ?
     _.popup.track.find('a[index="' + index + '"]') :
     _.track.find('a[index="' + index + '"]');
 };
