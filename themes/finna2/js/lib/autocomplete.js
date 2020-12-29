@@ -203,7 +203,7 @@
           });
         });
       }
-      console.log('yep');
+
       var query = $('.searchForm_lookfor').val().trim();
 
       // Phrase search
