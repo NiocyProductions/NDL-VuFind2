@@ -997,11 +997,11 @@ finna.imagePaginator = (function imagePaginator() {
     var _ = this;
     return _.imageHolder.find('a[index="' + index + '"]');
   };
-  
+
   /**
-   * Function to add callbacks after document is fully loaded or immediatly, if the document is already
+   * Function to add callbacks after document is fully loaded or immediately, if the document is already
    * loaded
-   * 
+   *
    * @param callback function to add
    */
   FinnaPaginator.prototype.addDocumentLoadCallback = function addDocumentLoadCallback(callback) {
