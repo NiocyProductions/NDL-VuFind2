@@ -837,7 +837,10 @@ class RecordDataFormatterFactory
             ]
         );
         $setTemplateLine(
-            'Dates', 'getUnitDates', 'data-lines-with-detail.phtml'
+            'Dates', 'getUnitDates', 'data-lines-with-detail.phtml',
+            [
+                'context' => ['title' => 'Date']
+            ]
         );
         $setTemplateLine(
             'Source of Acquisition', 'getAcquisitionSource', 'data-escapeHtml.phtml',
