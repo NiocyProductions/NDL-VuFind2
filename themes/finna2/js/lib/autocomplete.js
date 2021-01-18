@@ -271,6 +271,7 @@
               options.handler(input.val(), function optionsHandler(data) {
                 if (data.length === 0 && options.suggestions) {
                   hide();
+                  $.fn.autocompleteFinna.cache[cid][term] = [];
                 } else {
                   var searcher = extractClassParams(input);
                   var filters = null;
