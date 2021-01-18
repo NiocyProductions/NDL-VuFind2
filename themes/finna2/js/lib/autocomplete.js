@@ -257,7 +257,6 @@
             term.push(input.val());
             term.push(getSearchHandler(input));
             term.push(getPreserveFiltersMode(input) ? "1" : "0");
-            term.push(getPreserveFiltersMode(input) ? "1" : "0");
             term = term.join('###');
             var cid = input.data('cache-id');
             if (options.cache && typeof $.fn.autocompleteFinna.cache[cid][term] !== "undefined") {
@@ -271,7 +270,6 @@
               options.handler(input.val(), function optionsHandler(data) {
                 if (data.length === 0 && options.suggestions) {
                   hide();
-                  $.fn.autocompleteFinna.cache[cid][term] = [];
                 } else {
                   var searcher = extractClassParams(input);
                   var filters = null;
