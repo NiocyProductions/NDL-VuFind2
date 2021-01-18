@@ -269,6 +269,7 @@
               xhr = true;
               options.handler(input.val(), function optionsHandler(data) {
                 if (data.length === 0 && options.suggestions) {
+                  $.fn.autocompleteFinna.cache[cid][term] = [];
                   hide();
                 } else {
                   var searcher = extractClassParams(input);
