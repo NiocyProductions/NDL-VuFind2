@@ -190,6 +190,27 @@ trait SolrCommonFinnaTrait
     }
 
     /**
+     * Does this record contain restricted metadata?
+     *
+     * @return bool
+     */
+    public function hasRestrictedMetadata()
+    {
+        return false;
+    }
+
+    /**
+     * Is restricted metadata included with the record, i.e. is the user
+     * authorized to access restricted metadata?
+     *
+     * @return bool
+     */
+    public function isRestrictedMetadataIncluded()
+    {
+        return false;
+    }
+
+    /**
      * Get the VuFind configuration.
      *
      * @return \Laminas\Config\Config
@@ -197,5 +218,16 @@ trait SolrCommonFinnaTrait
     protected function getConfig()
     {
         return $this->mainConfig;
+    }
+
+    /**
+     * Returns the locale used by translator
+     *
+     * @return string
+     */
+    protected function getLocale()
+    {
+        list($locale) = explode('-', $this->getTranslatorLocale());
+        return $locale;
     }
 }

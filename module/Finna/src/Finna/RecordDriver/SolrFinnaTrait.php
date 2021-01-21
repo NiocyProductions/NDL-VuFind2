@@ -28,6 +28,8 @@
  */
 namespace Finna\RecordDriver;
 
+use VuFind\RecordDriver\Feature\VersionAwareInterface;
+
 /**
  * Additional functionality for Finna Solr records.
  *
@@ -57,6 +59,29 @@ trait SolrFinnaTrait
      * @var array
      */
     protected $cache = [];
+
+    /**
+     * Return an array of image URLs associated with this record with keys:
+     * - urls        Image URLs
+     *   - small     Small image (mandatory)
+     *   - medium    Medium image (mandatory)
+     *   - large     Large image (optional)
+     * - description Description text
+     * - rights      Rights
+     *   - copyright   Copyright (e.g. 'CC BY 4.0') (optional)
+     *   - description Human readable description (array)
+     *   - link        Link to copyright info
+     *
+     * @param string $language   Language for copyright information
+     * @param bool   $includePdf Whether to include first PDF file when no image
+     * links are found
+     *
+     * @return array
+     */
+    public function getAllImages($language = 'fi', $includePdf = true)
+    {
+        return [];
+    }
 
     /**
      * Return access restriction notes for the record.
@@ -251,6 +276,16 @@ trait SolrFinnaTrait
     }
 
     /**
+     * Get related places.
+     *
+     * @return array
+     */
+    public function getRelatedPlacesExtended()
+    {
+        return [];
+    }
+
+    /**
      * Get the hierarchy_parent_id(s) associated with this item (empty if none).
      *
      * @return array
@@ -433,7 +468,7 @@ trait SolrFinnaTrait
         if (!isset($this->fields['online_urls_str_mv'])) {
             return [];
         }
-        return $raw ? $this->fields['online_urls_str_mv'] : $this->checkForAudioUrls(
+        return $raw ? $this->fields['online_urls_str_mv'] : $this->resolveUrlTypes(
             $this->mergeURLArray(
                 $this->fields['online_urls_str_mv'], true
             )
@@ -843,16 +878,6 @@ trait SolrFinnaTrait
     }
 
     /**
-     * Get work identification keys
-     *
-     * @return array
-     */
-    public function getWorkKeys()
-    {
-        return $this->fields['work_keys_str_mv'] ?? [];
-    }
-
-    /**
      * A helper function that merges an array of JSON-encoded URLs
      *
      * @param array $urlArray Array of JSON-encoded URL attributes
@@ -942,21 +967,38 @@ trait SolrFinnaTrait
     }
 
     /**
-     * Checks if any of the URLs contains an audio file and updates
-     * the url array acoordingly
+     * Resolve URL types.
+     * Each URL is annotated with 'codec' field (taken from the file extension).
+     * In addition, image and audio URLs are annotated with 'type' field.
      *
-     * @param array $urls URLs to be checked for audio files
+     * @param array $urls URLs
      *
-     * @return array URL array with added audio and codec tag where
-     * appropriate
+     * @return array URL array with annotated URLs
      */
-    protected function checkForAudioUrls($urls)
+    protected function resolveUrlTypes($urls)
     {
         $newUrls = [];
         foreach ($urls as $url) {
-            if (preg_match('/^http(s)?:\/\/.*\.(mp3|wav)$/', $url['url'], $match)) {
-                $url['embed'] = 'audio';
-                $url['codec'] = $match[2];
+            if (preg_match(
+                '/^http(s)?:\/\/.*\.([a-zA-Z0-9]{3,4}.*)$/',
+                $url['url'], $match
+            )
+            ) {
+                $codec = $match[2];
+                $type = $embed = null;
+                switch (strtolower($codec)) {
+                case 'wav':
+                case 'mp3':
+                    $type = $embed = 'audio';
+                    break;
+                case 'jpg':
+                case 'png':
+                    $type = 'image';
+                    break;
+                }
+                $url['type'] = $type;
+                $url['codec'] = $codec;
+                $url['embed'] = $embed;
             }
             $newUrls[] = $url;
         }
@@ -1017,6 +1059,9 @@ trait SolrFinnaTrait
     /**
      * Return count of other versions available
      *
+     * Finna: Like VersionAwareTrait's getOtherVersionCount, but adds the call to
+     * addVersionsFilters.
+     *
      * @return int
      */
     public function getOtherVersionCount()
@@ -1025,14 +1070,19 @@ trait SolrFinnaTrait
             return false;
         }
 
-        if (!($workKeys = $this->getWorkKeys())) {
-            return false;
-        }
-
         if (!isset($this->otherVersionsCount)) {
+            if (!($workKeys = $this->tryMethod('getWorkKeys'))) {
+                if (!($this instanceof VersionAwareInterface)) {
+                    throw new \Exception(
+                        'VersionAwareTrait requires VersionAwareInterface'
+                    );
+                }
+                return false;
+            }
+
             $params = new \VuFindSearch\ParamBag();
             $params->add('rows', 0);
-            $this->addFilters($params);
+            $this->addVersionsFilters($params);
             $results = $this->searchService->workExpressions(
                 $this->getSourceIdentifier(),
                 $this->getUniqueID(),
@@ -1047,12 +1097,16 @@ trait SolrFinnaTrait
     /**
      * Retrieve versions as a search result
      *
+     * Finna: Like VersionAwareTrait's getVersions, but adds the call to
+     * addVersionsFilters.
+     *
      * @param bool $includeSelf Whether to include this record
      * @param int  $count       Maximum number of records to display
+     * @param int  $offset      Start position (0-based)
      *
      * @return \VuFindSearch\Response\RecordCollectionInterface
      */
-    public function getVersions($includeSelf = false, $count = 20)
+    public function getVersions($includeSelf = false, $count = 20, $offset = 0)
     {
         if (null === $this->searchService) {
             return false;
@@ -1064,8 +1118,9 @@ trait SolrFinnaTrait
 
         if (!isset($this->otherVersions)) {
             $params = new \VuFindSearch\ParamBag();
-            $params->add('rows', min($count, 100));
-            $this->addFilters($params);
+            $params->add('rows', $count);
+            $params->add('start', $offset);
+            $this->addVersionsFilters($params);
             $this->otherVersions = $this->searchService->workExpressions(
                 $this->getSourceIdentifier(),
                 $includeSelf ? '' : $this->getUniqueID(),
@@ -1077,15 +1132,28 @@ trait SolrFinnaTrait
     }
 
     /**
-     * Add filters to params
+     * Returns an array of 0 or more record label constants, or null if labels
+     * are not enabled in configuration.
+     *
+     * @return array|null
+     */
+    public function getRecordLabels()
+    {
+        return null;
+    }
+
+    /**
+     * Add versions search filters to params
      *
      * @param \VuFindSearch\ParamBag $paramBag Params
      *
      * @return void
      */
-    protected function addFilters(\VuFindSearch\ParamBag $paramBag)
+    protected function addVersionsFilters(\VuFindSearch\ParamBag $paramBag)
     {
-        $filterConf = $this->mainConfig->Record->display_versions ?? "all";
+        // Back-compatibility with the setting in config.ini:
+        $filterConf = $this->searchSettings['General']['versions_filter']
+            ?? $this->mainConfig->Record->display_versions ?? 'all';
         if ('same_source' === $filterConf) {
             // Add source filter
             $paramBag->add(

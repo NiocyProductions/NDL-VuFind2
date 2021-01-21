@@ -15,6 +15,8 @@ finna.imagePaginator = (function imagePaginator() {
     imagesPerRow: 8,
     enableImageZoom: false,
     recordType: 'default-type',
+    triggerClick: 'modal', // [modal, open, none]
+    displayIcon: false,
     leaflet: {
       offsetPercentage: 4
     }
@@ -34,7 +36,6 @@ finna.imagePaginator = (function imagePaginator() {
    *
    * @param {object} images
    * @param {object} settings
-   * @param {boolean} isList
    */
   function FinnaPaginator(images, settings) {
     var _ = this;
@@ -63,6 +64,7 @@ finna.imagePaginator = (function imagePaginator() {
     _.moreBtn = null;
     _.lessBtn = null;
     _.pagerInfo = null;
+    _.creditLine = null;
     _.leftBtn = null;
     _.rightBtn = null;
     _.leftBrowseBtn = null;
@@ -168,10 +170,12 @@ finna.imagePaginator = (function imagePaginator() {
         _.pagerInfo = covers.find('.paginator-info');
       } else {
         _.pagerInfo = _.trigger.find('.paginator-info');
+        _.creditLine = _.trigger.find('.image-credit-line');
       }
     } else {
       var mfpContainer = $('.finna-popup.content');
       _.pagerInfo = mfpContainer.find('.paginator-info');
+      _.creditLine = mfpContainer.find('.image-credit-line');
       _.leftBrowseBtn = mfpContainer.find('.next-image.left');
       _.rightBrowseBtn = mfpContainer.find('.next-image.right');
     }
@@ -277,6 +281,7 @@ finna.imagePaginator = (function imagePaginator() {
     _.setCanvasElement('noZoom');
     _.setCurrentVisuals();
     _.setPagerInfo(true);
+    _.setCreditLine(image.data('credit-line'));
     if (typeof _.settings.onlyImage === 'undefined' || _.settings.onlyImage === false) {
       _.loadImageInformation();
     }
@@ -300,6 +305,7 @@ finna.imagePaginator = (function imagePaginator() {
 
     _.setCanvasElement('leaflet');
     _.setPagerInfo(true);
+    _.setCreditLine(image.data('credit-line'));
     _.setCurrentVisuals();
 
     _.leafletHolder.eachLayer(function removeLayers(layer) {
@@ -478,6 +484,21 @@ finna.imagePaginator = (function imagePaginator() {
   };
 
   /**
+   * Function to update the credit line
+   */
+  FinnaPaginator.prototype.setCreditLine = function setCreditLine(credits) {
+    var _ = this;
+    if (null !== _.creditLine) {
+      if (credits) {
+        _.creditLine.text(credits);
+        _.creditLine.removeClass('hidden');
+      } else {
+        _.creditLine.addClass('hidden');
+      }
+    }
+  };
+
+  /**
    * Function to create the track which holds the smaller images. Also determines if is called from popup so a new track can be created
    *
    * @param {HTMLElement} popupTrackArea
@@ -549,7 +570,9 @@ finna.imagePaginator = (function imagePaginator() {
         if (!_.isList && _.images.length <= 1) {
           _.root.closest('.media-left').not('.audio').addClass('hidden-xs');
           _.root.closest('.media-left').find('.organisation-menu').hide();
-          _.root.css('display', 'none');
+          if (!_.settings.displayIcon) {
+            _.root.css('display', 'none');
+          }
           _.root.siblings('.image-details-container:not(:has(.image-rights))').hide();
           $('.record.large-image-layout').addClass('no-image-layout').removeClass('large-image-layout');
           $('.record-main').addClass('mainbody left');
@@ -557,8 +580,11 @@ finna.imagePaginator = (function imagePaginator() {
             $('.large-image-sidebar').addClass('visible-xs visible-sm');
           });
         }
-      } else if (_.trigger.hasClass('no-image')) {
-        _.trigger.removeClass('no-image');
+      } else {
+        if (_.trigger.hasClass('no-image')) {
+          _.trigger.removeClass('no-image');
+        }
+        _.setCreditLine(imagePopup.data('credit-line'));
       }
     }
 
@@ -574,9 +600,10 @@ finna.imagePaginator = (function imagePaginator() {
       }
     }
     _.imageDetail.html(imagePopup.data('description'));
+    _.setCreditLine('');
 
     img.unveil(100, function handleLoading() {
-      $(this).on('load', function handleImage() {
+      $(this).off('load').on('load', function handleImage() {
         setImageProperties(this);
       });
     });
@@ -791,6 +818,7 @@ finna.imagePaginator = (function imagePaginator() {
       'index': image.index,
       'data-largest': image.largest,
       'data-description': image.description,
+      'data-credit-line': image.creditLine,
       'href': (!_.isList && _.settings.enableImageZoom) ? image.largest : image.medium,
       'data-alt': image.alt
     });
@@ -869,7 +897,17 @@ finna.imagePaginator = (function imagePaginator() {
     _.setCurrentVisuals();
     var modal = $('#imagepopup-modal').find('.imagepopup-holder').clone();
 
-    _.trigger.not('[data-disable-modal="1"]').finnaPopup({
+    if (_.settings.triggerClick === 'none') {
+      var noneTrigger = $('<span class="image-popup-trigger"></span>');
+      _.trigger.children().appendTo(noneTrigger);
+      _.trigger.replaceWith(noneTrigger);
+      _.trigger = noneTrigger;
+      return;
+    } else if (_.settings.triggerClick === 'open') {
+      return;
+    }
+
+    _.trigger.finnaPopup({
       modal: modal,
       id: 'paginator',
       translations: translations,
@@ -984,15 +1022,20 @@ finna.imagePaginator = (function imagePaginator() {
     var _ = this;
     return _.imageHolder.find('a[index="' + index + '"]');
   };
-  
+
   /**
-   * Function to add callbacks after document is fully loaded
-   * 
+   * Function to add callbacks after document is fully loaded or immediately, if the document is already
+   * loaded
+   *
    * @param callback function to add
    */
   FinnaPaginator.prototype.addDocumentLoadCallback = function addDocumentLoadCallback(callback) {
     var _ = this;
-    _.onDocumentLoadCallbacks.push(callback);
+    if (jQuery.isReady) {
+      callback();
+    } else {
+      _.onDocumentLoadCallbacks.push(callback);
+    }
   };
 
   /**

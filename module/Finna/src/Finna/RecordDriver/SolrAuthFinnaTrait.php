@@ -224,17 +224,22 @@ trait SolrAuthFinnaTrait
      */
     public function getRelatedPlaces()
     {
-        return [];
+        return array_map(
+            function ($place) {
+                return ['data' => $place];
+            },
+            $this->fields['related_place'] ?? []
+        );
     }
 
     /**
      * Return summary
      *
-     * @return array|null
+     * @return array
      */
     public function getSummary()
     {
-        return null;
+        return [];
     }
 
     /**

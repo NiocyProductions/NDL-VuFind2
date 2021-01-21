@@ -41,7 +41,6 @@ use VuFindSearch\ParamBag;
 class RecordController extends \VuFind\Controller\RecordController
 {
     use FinnaRecordControllerTrait;
-    use CatalogLoginTrait;
 
     /**
      * Create record feedback form and send feedback to correct recipient.
@@ -93,6 +92,7 @@ class RecordController extends \VuFind\Controller\RecordController
             $config->NormalizationPreview->url,
             \Laminas\Http\Request::METHOD_POST
         );
+        $client->setOptions(['useragent' => 'FinnaRecordPreview VuFind']);
         $client->setParameterPost(
             ['data' => $data, 'format' => $format, 'source' => $source]
         );
@@ -720,6 +720,7 @@ class RecordController extends \VuFind\Controller\RecordController
             $config->NormalizationPreview->url,
             \Laminas\Http\Request::METHOD_POST
         );
+        $client->setOptions(['useragent' => 'FinnaRecordPreview VuFind']);
         $client->setParameterPost(
             ['func' => 'get_sources']
         );

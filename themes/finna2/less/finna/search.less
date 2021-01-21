@@ -316,8 +316,10 @@ mark, .highlight {
   }
   @media (min-width: @screen-sm-min){
     display: flex;
-    flex-direction: row-reverse;
     align-items: center;
+  }
+  .save-list-wrapper {
+    margin-right: 6px;
   }
 }
 .browse-title {
@@ -450,8 +452,48 @@ h2 {
   padding-right: 0.5em;
 }
 
+.record-type-lrmi.list-view {
+  .targeted-information {
+    margin: 6px 0 0;
+  }
+}
+
+.lrmi-topic {
+  display: inline-block;
+  margin: 0 3px 6px 0;
+  padding: 3px 6px;
+  color: @gray;
+  background-color: #F4F4F4;
+}
+
+.list-view .material-rights {
+  display: flex;
+  flex-flow: column nowrap;
+  .rights-icons {
+    background-color: initial;
+  }
+}
+
 .learning-material-recommendation {
   a {
     text-decoration: underline;
+  }
+}
+
+.versions-tab {
+  .search-header {
+    .search-controls {
+      margin-top: 0;
+      padding-top: 0;
+      padding-left: 1rem;
+      text-align: left;
+      .more-link {
+        margin-top: 2px;
+      }
+    }
+    .search-stats {
+      padding-top: 0;
+      flex-grow: 0;
+    }
   }
 }

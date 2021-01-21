@@ -46,14 +46,14 @@
   if (!empty($lastSearch)) {
     $this->layout()->breadcrumbs = '<li>' . $lastSearch . '</li> ';
   }
-  $this->layout()->breadcrumbs .= '<li><a href="' . $this->url('collections-home') . '">' . $this->transEsc('Collections') . '</a></li> '
-     . '<li class="active">' . $this->recordLink()->getBreadcrumb($this->driver) . '</li>';
+  $this->layout()->breadcrumbs .= '<li class="active" aria-current="page">' . $this->recordLink()->getBreadcrumb($this->driver) . '</li>';
 ?>
 <?php if (!empty($lastSearch)) : ?>
 </div>
 <div class="container">
 <?php endif; ?>
 <div class="record record-row">
+  <?= $this->R2()->registeredInfo($this->driver) ?>
   <div>
     <?=$this->record($this->driver)->getToolbar()?>
   </div>
@@ -62,6 +62,7 @@
   <div class="record-main mainbody left">
     <?=$this->flashmessages()?>
     <h2 class="collection-title"><?=$this->driver->getTitle();?></h2>
+    <?= $this->R2()->register($this->driver, ['brief' => true])?>
     <?php $formats = $this->driver->getFormats(); if (!empty($formats)): ?>
        <div class="recordFormat collection-format">
          <?=$this->record($this->driver)->getFormatList()?><br/>
@@ -85,7 +86,7 @@
     <?/* End Main Details */?>
   </div>
   <?php ob_start(); ?>
-    <?php if ($this->resolver('record/record-organisation-menu.phtml') && $this->driver->getSourceIdentifier() == 'Solr'): ?>
+    <?php if ($this->resolver('record/record-organisation-menu.phtml') && in_array($this->driver->getSourceIdentifier(), ['Solr', 'R2'])): ?>
       <div class="organisation-menu">
           <?=$this->render('record/record-organisation-menu.phtml') ?>
       </div>
@@ -111,7 +112,7 @@
         <?php endif; ?>
         <ul class="recordTabs nav nav-tabs visible-md visible-lg">
           <?php foreach ($this->tabs as $tab => $obj): ?>
-            <?php // add current tab to breadcrumbs if applicable:
+            <?php
               $desc = $obj->getDescription();
               $tabName = preg_replace("/\W/", "-", strtolower($tab));
               $tab_classes = [ 'record-tab', $tabName ];
@@ -120,7 +121,6 @@
                     $tab_classes[] = 'active';
                 }
                 $tab_classes[] = 'initiallyActive';
-                $this->layout()->breadcrumbs .= '<li class="active">' . $this->transEsc($desc) . '</li>';
                 $activeTabObj = $obj;
               }
               if (!$obj->isVisible()) { $tab_classes[] = 'hidden'; }
@@ -153,14 +153,12 @@
     <div class="record-accordions">
      <?php foreach ($this->tabs as $accordion => $obj): ?>
        <?php
-         // add current tab to breadcrumbs if applicable:
          $desc = $obj->getDescription();
          $accordion_classes = [
            'accordion',
            'accordion-' . strtolower($accordion)
          ];
          if (0 === strcasecmp($this->activeTab, $accordion)) {
-           $this->layout()->breadcrumbs .= '<li class="active">' . $this->transEsc($desc) . '</li>';
            if (!$this->loadInitialTabWithAjax || !$obj->supportsAjax()) {
              $accordion_classes[] = 'active';
            }
