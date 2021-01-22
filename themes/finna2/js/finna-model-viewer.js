@@ -220,6 +220,8 @@ finna.modelViewer = (function modelViewer() {
 
     _.controls = new THREE.OrbitControls(_.camera, _.renderer.domElement);
     _.controls.target = _.center;
+    _.controls.enablePan = false;
+    _.controls.minDistance = 20;
     _.controls.update();
   };
 
