@@ -77,8 +77,9 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Location', 'Manufacturer', 'Measurements',
             'Medium of Performance', 'Methodology', 'New Title',
             'Notated Music Format', 'Notes', 'Objective and Content',
-            'original_work_language', 'Other Classification', 'Other Classifications',
-            'Other ID', 'Other Links', 'Other Screenings',
+            'original_work_language', 'Other Classification',
+            'Other Classifications', 'Other ID',
+            'Other Links', 'Other Screenings',
             'Other Titles', 'Physical Description', 'Place of Origin',
             'Playing Time', 'Premiere Night', 'Premiere Theaters',
             'Presenters', 'Previous Title', 'Production',
@@ -91,8 +92,8 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Studios', 'Subject Actor', 'Subject Date',
             'Subject Detail', 'Subject Place', 'subjects_extended',
             'System Format', 'Terms of Use', 'Time Period',
-            'Time Period of Creation', 'Trade Availability Note', 'Uncontrolled Title',
-            'Uniform Title', 'Unit ID', 'Unit IDs'
+            'Time Period of Creation', 'Trade Availability Note',
+            'Uncontrolled Title', 'Uniform Title', 'Unit ID', 'Unit IDs'
         ];
 
         return array_intersect_key($coreFields, array_flip($include));
@@ -145,8 +146,8 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Subject Actor', 'Subject Date', 'Subject Detail',
             'Subject Place', 'Subjects', 'subjects_extended',
             'System Format', 'Terms of Use', 'Time Period',
-            'Time Period of Creation', 'Trade Availability Note', 'Uncontrolled Title',
-            'Uniform Title', 'Unit IDs'
+            'Time Period of Creation', 'Trade Availability Note',
+            'Uncontrolled Title', 'Uniform Title', 'Unit IDs'
         ];
 
         return array_intersect_key($coreFields, array_flip($include));
@@ -189,8 +190,9 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Physical Description', 'Place of Origin', 'Playing Time',
             'Premiere Night', 'Premiere Theaters', 'Presenters',
             'Previous Title', 'Production', 'Production Costs',
-            'Production Credits', 'Projected Publication Date', 'Publication Frequency',
-            'Publications', 'Publication_Place', 'Published in',
+            'Production Credits', 'Projected Publication Date',
+            'Publication Frequency', 'Publications',
+            'Publication_Place', 'Published in',
             'Publisher or Distributor Number', 'Record Links', 'Related Items',
             'Related Places', 'Scale', 'Secondary Authors',
             'Series', 'Sound', 'Source of Acquisition',
@@ -239,8 +241,8 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Medium of Performance', 'Methodology', 'Music',
             'New Title', 'Notated Music Format', 'Notes',
             'Objective and Content', 'Online Access', 'Original Work',
-            'original_work_language', 'Other Classification', 'Other Classifications',
-            'Other ID', 'Other Links', 'Other Screenings',
+            'original_work_language', 'Other Classification',
+            'Other Classifications', 'Other ID', 'Other Links', 'Other Screenings',
             'Other Titles', 'Physical Description', 'Place of Origin',
             'Playing Time', 'Premiere Night', 'Premiere Theaters',
             'Presenters', 'Press Reviews', 'Previous Title',
@@ -300,8 +302,9 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Place of Origin', 'Playing Time', 'Premiere Night',
             'Premiere Theaters', 'Presenters', 'Press Reviews',
             'Previous Title', 'Production', 'Production Costs',
-            'Production Credits', 'Projected Publication Date', 'Publication Frequency',
-            'Publications', 'Publication_Place', 'Publish date',
+            'Production Credits', 'Projected Publication Date',
+            'Publication Frequency', 'Publications',
+            'Publication_Place', 'Publish date',
             'Publisher', 'Publisher or Distributor Number', 'Record Links',
             'Related Items', 'Related Places', 'Scale',
             'Secondary Authors', 'Sound', 'Source of Acquisition',
@@ -404,8 +407,9 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Measurements', 'Medium of Performance', 'Methodology',
             'Music', 'New Title', 'Notated Music Format',
             'Notes', 'Objective and Content', 'Original Work',
-            'original_work_language', 'Other Classification', 'Other Classifications',
-            'Other ID', 'Other Links', 'Other Screenings',
+            'original_work_language', 'Other Classification',
+            'Other Classifications', 'Other ID',
+            'Other Links', 'Other Screenings',
             'Other Titles', 'Physical Description', 'Place of Origin',
             'Playing Time', 'Premiere Night', 'Premiere Theaters',
             'Presenters', 'Press Reviews', 'Previous Title',
@@ -459,13 +463,15 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Medium of Performance', 'Methodology', 'Music',
             'New Title', 'Notated Music Format', 'Notes',
             'Objective and Content', 'Online Access', 'Original Work',
-            'original_work_language', 'Other Classification', 'Other Classifications',
-            'Other ID', 'Other Links', 'Other Screenings',
+            'original_work_language', 'Other Classification',
+            'Other Classifications', 'Other ID',
+            'Other Links', 'Other Screenings',
             'Physical Description', 'Place of Origin', 'Playing Time',
             'Premiere Night', 'Premiere Theaters', 'Press Reviews',
             'Previous Title', 'Production', 'Production Costs',
-            'Production Credits', 'Projected Publication Date', 'Publication Frequency',
-            'Publications', 'Publication_Place', 'Publish date',
+            'Production Credits', 'Projected Publication Date',
+            'Publication Frequency', 'Publications',
+            'Publication_Place', 'Publish date',
             'Published', 'Publisher or Distributor Number', 'Record Links',
             'Related Items', 'Related Places', 'Scale',
             'Secondary Authors', 'Series', 'Sound',
@@ -473,8 +479,8 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
             'Subject Actor', 'Subject Date', 'Subject Detail',
             'Subject Place', 'Subjects', 'subjects_extended',
             'System Format', 'Terms of Use', 'Time Period',
-            'Time Period of Creation', 'Trade Availability Note', 'Uncontrolled Title',
-            'Uniform Title', 'Unit ID', 'Unit IDs'
+            'Time Period of Creation', 'Trade Availability Note',
+            'Uncontrolled Title', 'Uniform Title', 'Unit ID', 'Unit IDs'
         ];
 
         return array_intersect_key($coreFields, array_flip($include));
