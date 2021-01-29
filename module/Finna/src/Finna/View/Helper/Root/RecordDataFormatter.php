@@ -326,9 +326,10 @@ class RecordDataFormatter extends \VuFind\View\Helper\Root\RecordDataFormatter
     public function filterEAD3Fields($coreFields)
     {
         $include = [
-            'Accessibility Feature', 'Accessibility Hazard', 'Access Restrictions Extended',
-            'Additional Information', 'Age Limit', 'Archive',
-            'Archive Films', 'Archive Origination', 'Archive Relations',
+            'Accessibility Feature', 'Accessibility Hazard',
+            'Access Restrictions Extended', 'Additional Information',
+            'Age Limit', 'Archive', 'Archive Films',
+            'Archive Origination', 'Archive Relations',
             'Archive Series', 'Aspect Ratio', 'Audience',
             'Author Notes', 'Available Online', 'Awards',
             'Bibliography', 'Broadcasting Dates', 'child_records',
