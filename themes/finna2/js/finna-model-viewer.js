@@ -177,8 +177,7 @@ finna.modelViewer = (function modelViewer() {
         _.scene = obj.scene;
         _.scene.background = _.envMap;
         _.center = new THREE.Vector3();
-        _.cameraPosition = new THREE.Vector3(0, 40, -50);
-        console.log("Wat");
+        _.cameraPosition = new THREE.Vector3(0, 40, 50);
         _.setupScene();
       },
       function onLoading( xhr ) {
@@ -198,6 +197,8 @@ finna.modelViewer = (function modelViewer() {
     _.createLights();
     _.initMesh();
     _.createControls();
+    var axesHelper = new THREE.AxesHelper( 5 );
+    _.scene.add( axesHelper );
     _.animationLoop();
   };
 
@@ -220,7 +221,7 @@ finna.modelViewer = (function modelViewer() {
 
     _.controls = new THREE.OrbitControls(_.camera, _.renderer.domElement);
     _.controls.target = _.center;
-    _.controls.enablePan = false;
+    _.controls.screenSpacePanning = true;
     _.controls.minDistance = 20;
     _.controls.update();
   };
