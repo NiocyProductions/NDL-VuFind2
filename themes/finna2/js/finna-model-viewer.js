@@ -177,7 +177,7 @@ finna.modelViewer = (function modelViewer() {
         _.scene = obj.scene;
         _.scene.background = _.envMap;
         _.center = new THREE.Vector3();
-        _.cameraPosition = new THREE.Vector3(0, 40, 50);
+        _.cameraPosition = new THREE.Vector3(0, 0, 0);
         _.setupScene();
       },
       function onLoading( xhr ) {
@@ -195,8 +195,8 @@ finna.modelViewer = (function modelViewer() {
     var _ = this;
     
     _.createLights();
-    _.initMesh();
     _.createControls();
+    _.initMesh();
     var axesHelper = new THREE.AxesHelper( 5 );
     _.scene.add( axesHelper );
     _.animationLoop();
@@ -216,15 +216,20 @@ finna.modelViewer = (function modelViewer() {
   ModelViewer.prototype.createControls = function createControls()
   {
     var _ = this;
-    _.camera = new THREE.PerspectiveCamera( 75, _.size.x / _.size.x, 0.1, 1000 );
+    _.camera = new THREE.PerspectiveCamera( 50, _.size.x / _.size.x, 0.1, 1000 );
     _.camera.position.set(_.cameraPosition.x, _.cameraPosition.y, _.cameraPosition.z);
 
     _.controls = new THREE.OrbitControls(_.camera, _.renderer.domElement);
     _.controls.target = _.center;
     _.controls.screenSpacePanning = true;
-    _.controls.minDistance = 20;
+    //_.controls.minDistance = 0.1;
     _.controls.update();
   };
+
+  function getTanDeg(deg) {
+    var rad = deg * Math.PI / 180;
+    return Math.tan(rad);
+  }
 
   ModelViewer.prototype.initMesh = function initMesh()
   {
@@ -255,8 +260,27 @@ finna.modelViewer = (function modelViewer() {
         if (typeof geo.isBufferGeometry !== 'undefined' && geo.isBufferGeometry) {
           vertices += +geo.attributes.position.count;
           triangles += +geo.index.count / 3;
-          
         }
+        var newBox = new THREE.Box3().setFromObject(obj);
+
+        //Calculate new center position if the bounding box is not centered
+        var newCenterVector = new THREE.Vector3();
+        newBox.getCenter(newCenterVector);
+        newCenterVector.negate();
+        obj.position.set(newCenterVector.x, newCenterVector.y, newCenterVector.z);
+
+        //Calculate the distance for camera, so the object is properly adjusted in scene
+        var objectHeight = (newBox.max.y - newBox.min.y) * 1.05;
+        var objectWidth = (newBox.max.x - newBox.min.x) * 1.05;
+        var result = 0;
+        if (objectHeight >= objectWidth) {
+          result = objectHeight / getTanDeg(25);
+        } else {
+          result = objectWidth / getTanDeg(25);
+        }
+        _.camera.position.set(0, 0, result);
+        var box = new THREE.BoxHelper( obj, 0xffff00 );
+        _.scene.add( box );
         //obj.rotateX(Math.PI / 2);
       }
     });
