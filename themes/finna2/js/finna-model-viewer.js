@@ -74,9 +74,6 @@ finna.modelViewer = (function modelViewer() {
         }
       }
     });
-    _.wireframeBtn.on('click', function toggleWireFrame() {
-      _.meshMaterial.wireframe = !_.meshMaterial.wireframe;
-    });
   };
 
   ModelViewer.prototype.updateScale = function updateScale()
@@ -129,7 +126,8 @@ finna.modelViewer = (function modelViewer() {
         _.initViewer();
         _.optionsArea.toggle(true);
       })
-      .fail(function onGetModelFailed(response) {
+      .fail(function onGetModelFailed(/*response*/) {
+        // Requires a better failure handling,
         _.setImageTrigger();
       });
   };
@@ -150,6 +148,7 @@ finna.modelViewer = (function modelViewer() {
     _.renderer = new THREE.WebGLRenderer({
       antialias: true
     });
+    // These are the settings to make glb files look good with threejs
     _.renderer.physicallyCorrectLights = true;
     _.renderer.gammaOutput = true;
     _.renderer.gammaInput = true;
@@ -183,8 +182,8 @@ finna.modelViewer = (function modelViewer() {
       function onLoading( xhr ) {
         _.viewerStateInfo.html(( xhr.loaded / xhr.total * 100 ).toFixed(2) + '%');
       },
-      function onError( error ) {
-
+      function onError(/* error */) {
+        // Still needs to have an error handling set properly
       }
     );
   };
@@ -206,6 +205,7 @@ finna.modelViewer = (function modelViewer() {
   {
     var _ = this;
 
+    // Animation loop, required for constant updating
     function animate() {
       _.renderer.render(_.scene, _.camera);
       requestAnimationFrame(animate);
@@ -219,10 +219,12 @@ finna.modelViewer = (function modelViewer() {
     _.camera = new THREE.PerspectiveCamera( 50, _.size.x / _.size.x, 0.1, 1000 );
     _.camera.position.set(_.cameraPosition.x, _.cameraPosition.y, _.cameraPosition.z);
 
+    // Basic controls for scene, imagine being a satellite at the sky
     _.controls = new THREE.OrbitControls(_.camera, _.renderer.domElement);
+
+    // Should be THREE.Vector3(0,0,0)
     _.controls.target = _.center;
     _.controls.screenSpacePanning = true;
-    //_.controls.minDistance = 0.1;
     _.controls.update();
   };
 
@@ -239,17 +241,16 @@ finna.modelViewer = (function modelViewer() {
     var meshes = 0;
     var meshMaterial;
     _.scene.traverse(function traverseMeshes(obj) {
-      console.log(obj);
       if (obj.type === 'Mesh') {
         meshes++;
-        var geometry = obj.geometry;
         meshMaterial = obj.material;
-        // Reduce metalness to 0 and set cubemap as source to calculate lights
-        meshMaterial.envMap = _.envMap;
 
+        // Apply environmental map to the material, so lights look nicer
+        meshMaterial.envMap = _.envMap;
         meshMaterial.depthWrite = !meshMaterial.transparent;
         meshMaterial.bumpScale = 1;
 
+        // Apply encodings so glb looks better and update it if needed
         if (meshMaterial.map) meshMaterial.map.encoding = _.encoding;
         if (meshMaterial.emissiveMap) meshMaterial.emissiveMap.encoding = _.encoding;
         if (meshMaterial.normalMap) meshMaterial.normalMap.encoding = _.encoding;
@@ -284,7 +285,7 @@ finna.modelViewer = (function modelViewer() {
         //obj.rotateX(Math.PI / 2);
       }
     });
-    console.log("Here");
+
     _.informationsArea.toggle(true);
     _.setInformation('Vertices', vertices);
     _.setInformation('Triangles', triangles);
@@ -295,12 +296,13 @@ finna.modelViewer = (function modelViewer() {
   ModelViewer.prototype.createLights = function createLights()
   {
     var _ = this;
+
+    // Ambient light basically just is there all the time
     var ambientLight = new THREE.AmbientLight( 0xFFFFFF ); // soft white light
-    //var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.2);
     _.scene.add(ambientLight);
     var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 0.6 );
     _.scene.add( light );
-    var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.4 );
     _.scene.add( directionalLight );
   };
 
