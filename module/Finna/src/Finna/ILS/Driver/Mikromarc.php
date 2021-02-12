@@ -2071,8 +2071,8 @@ class Mikromarc extends \VuFind\ILS\Driver\AbstractBase implements
 
         $page = 0;
         $data = [];
-        $fetch = true;
-        while ($fetch) {
+        $nextPage = true;
+        do {
             $client->setUri($apiUrl);
             $response = $client->send();
             $result = $response->getBody();
@@ -2105,7 +2105,7 @@ class Mikromarc extends \VuFind\ILS\Driver\AbstractBase implements
             }
 
             // More results available?
-            if ($next = !empty($decodedResult['@odata.nextLink'])) {
+            if ($nextPage = !empty($decodedResult['@odata.nextLink'])) {
                 $client->setParameterPost([]);
                 $client->setParameterGet([]);
                 $apiUrl = $decodedResult['@odata.nextLink'];
@@ -2121,11 +2121,9 @@ class Mikromarc extends \VuFind\ILS\Driver\AbstractBase implements
                 $data = array_merge($data, $decodedResult);
             }
 
-            if (!$next) {
-                $fetch = false;
-            }
             $page++;
-        }
+        } while ($nextPage);
+
         return $returnCode ? [$response->getStatusCode(), $data]
             : $data;
     }
