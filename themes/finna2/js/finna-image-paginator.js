@@ -62,6 +62,7 @@ function FinnaPaginator(element, images, settings) {
   _.leafletLoader = null;
   _.leafletStartBounds = null;
   _.canvasElements = {};
+  _.onDocumentLoadCallbacks = [];
   _.openImageIndex = 0;
   _.imagePopup = $(imageElement).clone();
   _.init();
@@ -123,12 +124,16 @@ FinnaPaginator.prototype.init = function init() {
     _.setEvents();
     _.loadPage(0);
     _.setTrigger(_.track.find('a:first'));
+    _.addDocumentLoadCallback(function showLeftsidebar() {
+      $('.large-image-sidebar').removeClass('hidden');
+    });
   } else {
     _.setEvents();
     _.setListTrigger(_.getImageFromArray(0));
     _.covers.addClass('mini-paginator');
     _.covers.siblings('.recordcovers-more').first().hide();
   }
+  _.onDocumentLoad();
 };
 
 /**
@@ -540,6 +545,9 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
         $('.record.large-image-layout').addClass('no-image-layout').removeClass('large-image-layout');
         $('.large-image-sidebar').addClass('visible-xs visible-sm');
         $('.record-main').addClass('mainbody left');
+        _.addDocumentLoadCallback(function hideSidebar() {
+          $('.large-image-sidebar').addClass('visible-xs visible-sm');
+        });
       }
     } else {
       if (_.trigger.hasClass('no-image')) {
@@ -1006,6 +1014,34 @@ FinnaPaginator.prototype.findSmallImage = function findSmallImage(index) {
   return _.popup.track ?
     _.popup.track.find('a[index="' + index + '"]') :
     _.track.find('a[index="' + index + '"]');
+};
+
+/**
+ * Function to add callbacks after document is fully loaded or immediately, if the document is already
+ * loaded
+ *
+ * @param callback function to add
+ */
+FinnaPaginator.prototype.addDocumentLoadCallback = function addDocumentLoadCallback(callback) {
+  var _ = this;
+  if (jQuery.isReady) {
+    callback();
+  } else {
+    _.onDocumentLoadCallbacks.push(callback);
+  }
+};
+
+/**
+ * Function to init on document loaded callbacks
+ */
+FinnaPaginator.prototype.onDocumentLoad = function onDocumentLoad() {
+  var _ = this;
+  $(document).ready(function doDocumentLoadCallbacks() {
+    for (var i = 0; i < _.onDocumentLoadCallbacks.length; i++) {
+      _.onDocumentLoadCallbacks[i]();
+    }
+    _.onDocumentLoadCallbacks = [];
+  });
 };
 
 (function paginatorModule($) {

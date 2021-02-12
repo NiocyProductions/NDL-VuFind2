@@ -5,8 +5,9 @@ finna.combinedResults = (function finnaCombinedResults() {
       finna.layout.initTruncate();
       finna.layout.initImagePaginators();
       finna.openUrl.initLinks(container);
+      finna.itemStatus.initDedupRecordSelection(container);
       VuFind.itemStatuses.check(container);
-      finna.record.initRecordVersions(container);
+      VuFind.recordVersions.init(container);
       VuFind.lightbox.bind(container);
       VuFind.cart.init(container);
       checkSaveStatuses(container);
