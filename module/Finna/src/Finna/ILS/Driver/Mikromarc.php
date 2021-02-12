@@ -2071,7 +2071,7 @@ class Mikromarc extends \VuFind\ILS\Driver\AbstractBase implements
 
         $page = 0;
         $data = [];
-        $nextPage = true;
+        $nextPage = false;
         do {
             $client->setUri($apiUrl);
             $response = $client->send();
