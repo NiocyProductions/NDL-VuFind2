@@ -215,7 +215,7 @@ FinnaPopup.prototype.show = function show() {
 };
 
 /**
- * Get 
+ * Get translation for internal key
  */
 FinnaPopup.prototype.getTranslation = function getTranslation(key) {
   var _ = this;
