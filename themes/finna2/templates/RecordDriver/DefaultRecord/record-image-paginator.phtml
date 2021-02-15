@@ -13,7 +13,7 @@
     <?php
       $originalImageData = $recordImage->getMasterImageWithInfo($ind);
       $originalImage = $originalImageData['url'] ?? false;
-      $desc = isset($img['description']) && !empty($img['description']) ? $img['description'] : $this->transEsc('Cover Image');
+      $desc = !empty($img['description']) ? $img['description'] : "";
       $creditLine = $img['rights']['creditLine'] ?? '';
       if ($creditLine && !empty($img['rights']['copyright'])) {
         if (substr($creditLine, -1) !== '.') {
