@@ -177,7 +177,7 @@ class SolrDefaultBackendFactory
      * Get a deduplication listener for the backend
      *
      * @param Backend $backend Search backend
-     * @param bool             $enabled Whether deduplication is enabled
+     * @param bool    $enabled Whether deduplication is enabled
      *
      * @return Finna\Search\Solr\DeduplicationListener
      */
