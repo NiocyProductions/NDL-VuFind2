@@ -65,6 +65,13 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
     protected $cachedImages;
 
     /**
+     * Models cache
+     * 
+     * @var array
+     */
+    protected $modelsCache;
+
+    /**
      * Constructor
      *
      * @param \Laminas\Config\Config $mainConfig     VuFind main configuration (omit
@@ -272,7 +279,10 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                     $formatDisallowed = in_array(
                         strtolower($format), $this->undisplayableFileFormats
                     );
+
                     if ($formatDisallowed) {
+                        // Try to parse model data out of here so it is saved
+                        
                         continue;
                     }
                 }
@@ -449,36 +459,74 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
     }
 
     /**
-     * Return required information about 3d-models from lido
+     * Save required information about 3d-models from lido
      * 
-     * @return boolean|array
+     * @param object $representation to parse
+     * 
      */
-    public function getModelData()
+    public function getModels(): array
     {
-        $data = [];
+        if (null !== $this->modelsCache) {
+            return $this->modelsCache;
+        }
+        $models = [];
+        $i = 0;
         foreach ($this->getXmlRecord()->xpath(
             '/lidoWrap/lido/administrativeMetadata/'
             . 'resourceWrap/resourceSet'
         ) as $resourceSet) {
-            if (empty($resourceSet->resourceRepresentation)) {
-                continue;
-            }
             foreach ($resourceSet->resourceRepresentation as $representation) {
-                switch (strtolower((string)$representation->attributes()->type)) {
+                $linkResource = $representation->linkResource;
+                $url = trim((string)$linkResource);
+                $type = strtolower((string)$representation->attributes()->type);
+                $format = $linkResource->attributes()->formatResource ?? '';
+                $format = strtolower(trim((string)$format));
+                if (!in_array($format, ['glb', 'gltf'])) {
+                    continue;
+                }
+                switch ($type) {
                 case '3d_thumb':
-                    $data['preview_url'] = (string)$representation->linkResource;
+                    $model['url'] = (string)$representation->linkResource;
+                    $model['type'] = '3d_thumb';
                     break;
-                case 'preview 3d':
-                    $data['preview_model'] = (string)$representation->linkResource;
+                case 'preview_3d':
+                case '3d malli':
+                case '3d_malli':
+                    $model['url'] = (string)$representation->linkResource;
+                    $model['type'] = 'preview_3d';
                     break;
-                case 'provided 3d':
-                    $data['large_model'] = (string)$representation->linkResource;
+                case 'provided_3d':
+                    $model['url'] = (string)$representation->linkResource;
+                    $model['type'] = 'provided_3d';
                     break;
                 }
-            }
-        }
 
-        return empty($data) ? false : $data;
+                if (!empty($model['url'])) {
+                    $models[$i][$format] = $model;
+                }
+            }
+            $i++;
+        };
+        return $this->modelsCache = $models;
+    }
+
+    /**
+     * Return settings from config
+     * 
+     * @return array settings
+     */
+    public function getModelSettings(): array
+    {
+        return [
+            'popup' => false,
+            'parentCanvas' => 'model-canvas-wrapper',
+            /*'cubemap' => [
+                'path' => $this->imageSrc()->getImagesDirectoryPath(),
+                'images' => [
+                    'px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'
+                ]
+            ]*/
+        ];
     }
 
     /**

@@ -18,8 +18,7 @@
           }
       }
   }
-
-  $model = $this->driver->getModelData();
+  $models = $this->driver->tryMethod('getModels');
   $thumbnail = false;
   $thumbnailAlignment = $this->record($this->driver)->getThumbnailAlignment('result');
   ob_start();
@@ -29,20 +28,18 @@
     <?php
       // We need a tab controller here, so we can do stuff properly
     ?>
-    <?php if ($model) :?>
-      <?= $this->render('record/viewer-tabs.phtml'); ?>
-    <?php endif; ?>
     <?=$this->record($this->driver)->renderTemplate('record-image-information.phtml', ['img' => $img, 'sizes' => ['small' => ['w' => 100, 'h' => 100], 'medium' => ['w' => 1200, 'h' => 1200]]]);?>
 
-    <?php if ($model) :?>
-      <?=$this->record($this->driver)->renderTemplate('model-viewer.phtml', ['model' => $model]); ?>
-    <?php endif; ?>
     <?php if (!empty($videoUrls)): ?>
       <?=$this->record($this->driver)->renderTemplate('record-video-player.phtml', ['videoUrls' => $videoUrls, 'type' => 'SolrLido']);?>
     <?php endif; ?>
 
     <?php if (!empty($audioUrls)): ?>
       <?=$this->record($this->driver)->renderTemplate('record-audio-player.phtml', ['audioUrls' => $audioUrls]);?>
+    <?php endif; ?>
+
+    <?php if (!empty($models)): ?>
+      <?=$this->record($this->driver)->renderTemplate('record-models.phtml', ['models' => $models]);?>
     <?php endif; ?>
 
     <?php if ($this->resolver('record/record-organisation-menu.phtml') && $this->driver->getSourceIdentifier() == 'Solr'): ?>

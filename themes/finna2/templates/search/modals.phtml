@@ -52,4 +52,30 @@
     </div>
   </div>
 </div>
+
+<!-- 3D model modal -->
+<div id="model-modal" hidden>
+  <div class="model-wrapper">
+    <div class="model-canvas-wrapper" style="position:relative;text-align:center;">
+      <div class="viewer-options"> 
+        <div class="viewer-controls">
+          <button class="viewer-btn model-fullscreen" type="button"><i class="fa fa-fullscreen"></i> <span class="sr-only">Fullscreen</span></button>
+          <button class="viewer-btn model-wireframe" type="button"><i class="fa fa-info"></i> <span class="sr-only">Options</span></button>
+        </div>
+        <div class="viewer-statistics">
+          <div>
+            <button class="viewer-btn" data-toggle="collapse" data-target="#model-stats">Mallin tietoja</button>
+            <div id="model-stats" class="collapse">
+              <table class="table table-finna-record record-details">
+                  <tbody class="statistics-table">
+                      
+                  </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- END of: finna - search/modals.phtml -->

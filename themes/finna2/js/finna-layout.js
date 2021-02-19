@@ -789,6 +789,12 @@ finna.layout = (function finnaLayout() {
     _activateLoginTab($('.login-tabs .accordion-heading.initiallyActive a').data('tab'));
   }
 
+  function initModelViewers() {
+    $('.model-trigger').each(function initModelViewer() {
+      $(this).finnaModel();
+    });
+  }
+
   var my = {
     getOrganisationPageLink: getOrganisationPageLink,
     isTouchDevice: isTouchDevice,
@@ -837,6 +843,7 @@ finna.layout = (function finnaLayout() {
       initFiltersToggle();
       initFiltersCheckbox();
       initCookieConsent();
+      initModelViewers();
     },
     showPostLoginLightbox: showPostLoginLightbox
   };

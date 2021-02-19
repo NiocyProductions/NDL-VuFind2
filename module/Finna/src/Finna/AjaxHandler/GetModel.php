@@ -69,24 +69,28 @@ class GetModel extends \VuFind\AjaxHandler\AbstractBase
         $this->disableSessionWrites();  // avoid session write timing bug
 
         $id = $params->fromPost('id', $params->fromQuery('id'));
+        $index = $params->fromPost('index', $params->fromQuery('index'));
+        $format = $params->fromPost('format', $params->fromQuery('format'));
 
-        if (!$id) {
+        if (!$id || !$index || !$format) {
             return json_encode(['status' => self::STATUS_HTTP_BAD_REQUEST]);
         }
-
+        $format = strtolower($format);
         $cacheDir = $this->cacheManager->getCache('public')->getOptions()
             ->getCacheDir();
-        $fileName = urlencode($id) . '.glb';
+        $fileName = urlencode($id) . '-' . $index . '.' . $format;
         $localFile = "$cacheDir/$fileName";
 
         // Check if the model has been cached
         if (!file_exists($localFile)) {
             $driver = $this->recordLoader->load($id, 'Solr');
-            $data = $driver->getModelData();
-            if (!$data) {
-                return $this->formatResponse(['json' => ['status' => 'Error']]);
+            $models = $driver->getModels();
+            if (!isset($models[$index][$format])) {
+                return $this->formatResponse(json_encode(['json' => ['status' => self::STATUS_HTTP_BAD_REQUEST]]));
             }
-            $url = $data['preview_model'] ?? '';
+            $model = $models[$index][$format];
+
+            $url = $model['url'];
             if (empty($url)) {
                 return $this->formatResponse(['json' => ['status' => 'Error']]);
             }
