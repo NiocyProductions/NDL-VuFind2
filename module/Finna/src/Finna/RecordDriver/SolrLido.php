@@ -281,8 +281,6 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                     );
 
                     if ($formatDisallowed) {
-                        // Try to parse model data out of here so it is saved
-                        
                         continue;
                     }
                 }
@@ -302,7 +300,6 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                     break;
                 case 'image_large':
                 case 'large':
-                case 'image_original';
                 case 'zoomview':
                     $size = 'large';
                     break;
@@ -311,6 +308,9 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                     break;
                 case 'image_original':
                     $size = 'original';
+                    break;
+                case '3d_thumb':
+                    $size = 'small';
                     break;
                 }
 
@@ -363,7 +363,8 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                 'urls' => $urls,
                 'description' => '',
                 'rights' => $rights,
-                'highResolution' => $highResolution
+                'highResolution' => $highResolution,
+                'models' => []
             ];
 
             if (!empty($resourceSet->resourceID)) {
@@ -475,6 +476,7 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
             '/lidoWrap/lido/administrativeMetadata/'
             . 'resourceWrap/resourceSet'
         ) as $resourceSet) {
+            $model = [];
             foreach ($resourceSet->resourceRepresentation as $representation) {
                 $linkResource = $representation->linkResource;
                 $url = trim((string)$linkResource);
@@ -486,8 +488,7 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                 }
                 switch ($type) {
                 case '3d_thumb':
-                    $model['url'] = (string)$representation->linkResource;
-                    $model['type'] = '3d_thumb';
+                    $model['preview'] = (string)$representation->linkResource;
                     break;
                 case 'preview_3d':
                 case '3d malli':
@@ -501,7 +502,7 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                     break;
                 }
 
-                if (!empty($model['url'])) {
+                if (!empty($model['url']) && $type !== '3d_thumb') {
                     $models[$i][$format] = $model;
                 }
             }
@@ -520,6 +521,7 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
         return [
             'popup' => false,
             'parentCanvas' => 'model-canvas-wrapper',
+            'inLineId' => 'inline-viewer'
             /*'cubemap' => [
                 'path' => $this->imageSrc()->getImagesDirectoryPath(),
                 'images' => [

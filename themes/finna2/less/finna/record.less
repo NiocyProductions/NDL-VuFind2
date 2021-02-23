@@ -232,95 +232,6 @@ a.authority {
         }
       }
     }
-    .model-wrapper {
-      background-color: white;
-      min-height: 250px;
-      .model-thumbnail {
-        -webkit-filter: blur(2px); /* Safari 6.0 - 9.0 */
-        filter: blur(2px);
-      }
-      .viewer-options {
-        position: absolute;
-        top: 0;
-        right: 0;
-        margin-top: 4px;
-        margin-right: 4px;
-        width: 40%;
-        max-width: 400px;
-        .viewer-controls {
-          margin-bottom: 4px;
-          text-align: right;
-        }
-        .viewer-btn {
-          appearance: none;
-          -webkit-appearance: none;
-          border: none;
-          padding: 2px;
-          background-color: white;
-          color: black;
-          font-size: 20px;
-          &.info {
-            background-color: black;
-            color: white;
-          }
-        }
-        .viewer-statistics {
-          table {
-            background-color: white;
-            margin-bottom: 0;
-          }
-          .viewer-btn {
-            width: 100%;
-          }
-        }
-      }
-
-      .model-canvas-wrapper {
-        .viewer-state-info {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          font-size: 24px;
-          background-color: @brand-primary;
-          color: white;
-          border-radius: 4px;
-          padding: 4px;
-          transform: translate(-50%, -50%);
-        }
-      }
-      .model-information {
-        .model-header {
-          color: white;
-          display: flex;
-          background-color: @brand-primary;
-          p {
-            font-size: 18px;
-            margin: 4px;
-          }
-        }
-        th {
-          padding-left: 4px;
-        }
-      }
-      &.fullscreen {
-        position: absolute;
-        left: 0;
-        z-index: 10000;
-        .model-information {
-          max-width: 500px;
-          background-color: white;
-          position: absolute;
-          bottom: 0;
-          margin: 4px;
-          table {
-            margin-bottom: 0;
-          }
-          th, td {
-            width: 50%;
-          }
-        }
-      }
-    }
   }
   .smaller-image-sidebar {
     display: none;
@@ -945,4 +856,94 @@ a.authority {
 // Record feedback
 .feedback-record {
   margin-top: 1em;
+}
+
+.model-wrapper {
+  background-color: white;
+  min-height: 250px;
+  .model-thumbnail {
+    -webkit-filter: blur(2px); /* Safari 6.0 - 9.0 */
+    filter: blur(2px);
+  }
+  .viewer-options {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: 4px;
+    margin-right: 4px;
+    width: 40%;
+    max-width: 400px;
+    .viewer-controls {
+      margin-bottom: 4px;
+      text-align: right;
+    }
+    .viewer-btn {
+      appearance: none;
+      -webkit-appearance: none;
+      border: none;
+      padding: 2px;
+      background-color: white;
+      color: black;
+      font-size: 20px;
+      &.info {
+        background-color: black;
+        color: white;
+      }
+    }
+    .viewer-statistics {
+      table {
+        background-color: white;
+        margin-bottom: 0;
+      }
+      .viewer-btn {
+        width: 100%;
+      }
+    }
+  }
+
+  .model-canvas-wrapper {
+    .viewer-state-info {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      font-size: 24px;
+      background-color: @brand-primary;
+      color: white;
+      border-radius: 4px;
+      padding: 4px;
+      transform: translate(-50%, -50%);
+    }
+  }
+  .model-information {
+    .model-header {
+      color: white;
+      display: flex;
+      background-color: @brand-primary;
+      p {
+        font-size: 18px;
+        margin: 4px;
+      }
+    }
+    th {
+      padding-left: 4px;
+    }
+  }
+  &.fullscreen {
+    position: absolute;
+    left: 0;
+    z-index: 10000;
+    .model-information {
+      max-width: 500px;
+      background-color: white;
+      position: absolute;
+      bottom: 0;
+      margin: 4px;
+      table {
+        margin-bottom: 0;
+      }
+      th, td {
+        width: 50%;
+      }
+    }
+  }
 }

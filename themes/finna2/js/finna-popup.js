@@ -213,6 +213,7 @@ FinnaPopup.prototype.onPopupInit = function onPopupInit(/*trigger*/) { };
 
 FinnaPopup.prototype.onPopupOpen = function onPopupOpen(open, close) {
   var _ = this;
+  $.fn.finnaPopup.closeOpen();
   _.show();
 
   if (typeof open !== 'undefined') {

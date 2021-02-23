@@ -92,17 +92,17 @@ class GetModel extends \VuFind\AjaxHandler\AbstractBase
 
             $url = $model['url'];
             if (empty($url)) {
-                return $this->formatResponse(['json' => ['status' => 'Error']]);
+                return $this->formatResponse(['json' => ['status' => '404']]);
             }
             // Load the file from a server
             $file = file_get_contents($url);
             if (!$file) {
-                return $this->formatResponse(['json' => ['status' => 'Error']]);
+                return $this->formatResponse(['json' => ['status' => '500']]);
             }
             // Save the file to a local cache for future usage
             $save = file_put_contents($localFile, $file);
             if (!$save) {
-                return $this->formatResponse(['json' => ['status' => 'Error']]);
+                return $this->formatResponse(['json' => ['status' => '500']]);
             }
         }
         $route = stripslashes($this->router->getBaseUrl());

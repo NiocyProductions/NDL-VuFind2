@@ -6,14 +6,17 @@ function ModelViewer(trigger, options, scripts)
   _.trigger = $(trigger);
   _.cubeSettings = options.cubemap;
   _.parentId = options.parentCanvas;
+  if (options.inLineId) {
+    _.inLineId = options.inLineId;
+  }
   _.modelUrl = _.trigger.data('modelurl');
   _.loadInfo = _.trigger.data('modelload');
-  console.log(_.loadInfo);
   var modal = $('#model-modal').find('.model-wrapper').first().clone();
 
   _.trigger.finnaPopup({
     id: 'modelViewer',
-    cycle: true,
+    cycle: false,
+    parent: _.inLineId ? _.inLineId : undefined,
     classes: 'model-viewer',
     translations: options.translations,
     modal: modal,
@@ -24,14 +27,16 @@ function ModelViewer(trigger, options, scripts)
           // Lets create required html elements
           _.canvasParent = popup.content.find('.' + _.parentId);
           _.informations = {};
-          _.root = popup.content;
+          _.root = popup.content.find('.model-viewer');
           _.controlsArea = _.root.find('.viewer-controls');
           _.optionsArea = _.root.find('.viewer-options');
           _.optionsArea.toggle(false);
           _.fullscreen = _.controlsArea.find('.model-fullscreen');
           _.viewerStateInfo = _.root.find('.viewer-state-info');
           _.informationsArea = _.root.find('.statistics-table');
+          _.root.find('.model-stats').attr('id', 'model-stats');
           _.informationsArea.toggle(false);
+          console.log(_.root);
         }
         _.getModelPath();
       });
@@ -61,14 +66,15 @@ ModelViewer.prototype.setInformation = function setInformation(header, info)
 ModelViewer.prototype.setEvents = function setEvents()
 {
   var _ = this;
-  $(window).on('resize', function setNewScale() {
+  var fullscreenEvents = 'fullscreenchange.finna mozfullscreenchange.finna webkitfullscreenchange.finna';
+  $(window).off('resize').on('resize', function setNewScale() {
     if (typeof _.camera === 'undefined') {
       return;
     }
     _.updateScale();
   });
 
-  $(document).on("fullscreenchange mozfullscreenchange webkitfullscreenchange", function onScreenChange() {
+  $(document).off(fullscreenEvents).on(fullscreenEvents, function onScreenChange() {
     if (_.root.hasClass('fullscreen')) {
       _.root.removeClass('fullscreen');
     } else {
@@ -77,7 +83,7 @@ ModelViewer.prototype.setEvents = function setEvents()
     _.updateScale();
   });
 
-  _.fullscreen.on('click', function setFullscreen() {
+  _.fullscreen.off('click').on('click', function setFullscreen() {
     if (_.root.hasClass('fullscreen')) {
       if (document.exitFullscreen) {
         document.exitFullscreen();
@@ -120,6 +126,7 @@ ModelViewer.prototype.initViewer = function initViewer()
   _.createRenderer();
   _.loadCubeMap();
   _.loadGLTF();
+  _.setEvents();
 };
 
 ModelViewer.prototype.startModelViewer = function startModelViewer()
@@ -136,7 +143,7 @@ ModelViewer.prototype.getParentSize = function getParentSize()
   var _ = this;
   _.size = {
     x: _.root.width(),
-    y: _.root.hasClass('fullscreen') ? _.root.height() : _.root.width()
+    y: _.inLineId && !_.root.hasClass('fullscreen') ? _.root.width() : _.root.height()
   };
 };
 
@@ -162,7 +169,7 @@ ModelViewer.prototype.createRenderer = function createRenderer()
   _.renderer.setSize(_.size.x, _.size.y);
   _.canvasParent.append(_.renderer.domElement);
   console.log("Renderer applied to");
-  console.log(_.canvasParent); 
+  console.log(_.size); 
 };
 
 ModelViewer.prototype.getModelPath = function getModelPath()
@@ -240,7 +247,7 @@ ModelViewer.prototype.animationLoop = function animationLoop()
 ModelViewer.prototype.createControls = function createControls()
 {
   var _ = this;
-  _.camera = new THREE.PerspectiveCamera( 50, _.size.x / _.size.x, 0.1, 1000 );
+  _.camera = new THREE.PerspectiveCamera( 50, _.size.x / _.size.y, 0.1, 1000 );
   _.camera.position.set(_.cameraPosition.x, _.cameraPosition.y, _.cameraPosition.z);
 
   // Basic controls for scene, imagine being a satellite at the sky
@@ -289,10 +296,10 @@ ModelViewer.prototype.initMesh = function initMesh()
       var newBox = new THREE.Box3().setFromObject(obj);
 
       //Calculate new center position if the bounding box is not centered
-      //var newCenterVector = new THREE.Vector3();
-      // newBox.getCenter(newCenterVector);
-      // newCenterVector.negate();
-      // obj.position.set(newCenterVector.x, newCenterVector.y, newCenterVector.z);
+      var newCenterVector = new THREE.Vector3();
+      newBox.getCenter(newCenterVector);
+      newCenterVector.negate();
+      obj.position.set(newCenterVector.x, newCenterVector.y, newCenterVector.z);
 
       //Calculate the distance for camera, so the object is properly adjusted in scene
       var objectHeight = (newBox.max.y - newBox.min.y) * 1.05;
