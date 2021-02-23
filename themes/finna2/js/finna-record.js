@@ -178,7 +178,7 @@ finna.record = (function finnaRecord() {
       var $recordUrls = $('.recordURLs');
       var $existing = $recordUrls.find('a[href="' + href + '"]');
       var desc = $a.text();
-      if ($existing.length === 0) {
+      if ($existing.length === 0 || $existing.text() !== desc) {
         // No existing link, prepend to the list
         var newLink = $('.recordURLs .url-template').html();
         newLink = newLink
@@ -189,9 +189,12 @@ finna.record = (function finnaRecord() {
         var $newLink = $(newLink)
           .removeClass('url-template')
           .removeClass('hidden');
-        $newLink.prependTo($recordUrls);
-      } else if ($existing.text() !== desc) {
-        $existing.text(desc);
+
+        if ($existing.length === 0) {
+          $newLink.prependTo($recordUrls);
+        } else {
+          $existing.replaceWith($newLink);
+        }
       }
     });
 
