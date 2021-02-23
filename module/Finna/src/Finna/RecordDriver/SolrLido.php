@@ -521,7 +521,7 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
         return [
             'popup' => false,
             'parentCanvas' => 'model-canvas-wrapper',
-            'inLineId' => 'inline-viewer'
+            //'inLineId' => 'inline-viewer'
             /*'cubemap' => [
                 'path' => $this->imageSrc()->getImagesDirectoryPath(),
                 'images' => [

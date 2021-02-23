@@ -32,16 +32,22 @@ function ModelViewer(trigger, options, scripts)
           _.optionsArea = _.root.find('.viewer-options');
           _.optionsArea.toggle(false);
           _.fullscreen = _.controlsArea.find('.model-fullscreen');
-          _.viewerStateInfo = _.root.find('.viewer-state-info');
+          _.viewerStateInfo = _.root.find('.viewer-state-wrapper');
+          _.viewerStateInfo.html('0%');
+          _.viewerStateInfo.show();
           _.informationsArea = _.root.find('.statistics-table');
           _.root.find('.model-stats').attr('id', 'model-stats');
           _.informationsArea.toggle(false);
-          console.log(_.root);
         }
+        _.createRenderer();
         _.getModelPath();
       });
     },
     onPopupClose: function onPopupClose() {
+      if (_.loop) {
+        window.clearTimeout(_.loop);
+        _.loop = null;
+      }
       _.root = null;
       _.renderer = null;
       _.scene = null;
@@ -123,7 +129,6 @@ ModelViewer.prototype.updateScale = function updateScale()
 ModelViewer.prototype.initViewer = function initViewer()
 {
   var _ = this;
-  _.createRenderer();
   _.loadCubeMap();
   _.loadGLTF();
   _.setEvents();
@@ -168,8 +173,6 @@ ModelViewer.prototype.createRenderer = function createRenderer()
   _.renderer.setPixelRatio(window.devicePixelRatio);
   _.renderer.setSize(_.size.x, _.size.y);
   _.canvasParent.append(_.renderer.domElement);
-  console.log("Renderer applied to");
-  console.log(_.size); 
 };
 
 ModelViewer.prototype.getModelPath = function getModelPath()
@@ -187,7 +190,6 @@ ModelViewer.prototype.getModelPath = function getModelPath()
     .done(function onGetModelDone(response) {
       _.modelPath = response.data.url;
       _.initViewer();
-      _.optionsArea.toggle(true);
     })
     .fail(function onGetModelFailed(response) {
       console.log(response);
@@ -197,7 +199,6 @@ ModelViewer.prototype.getModelPath = function getModelPath()
 ModelViewer.prototype.loadGLTF = function loadGLTF()
 {
   var _ = this;
-  console.log(_.modelPath);
 
   var loader = new THREE.GLTFLoader();
   loader.load(
@@ -208,12 +209,14 @@ ModelViewer.prototype.loadGLTF = function loadGLTF()
       _.center = new THREE.Vector3();
       _.cameraPosition = new THREE.Vector3(0, 0, 0);
       _.setupScene();
+      _.viewerStateInfo.hide();
+      _.optionsArea.toggle(true);
     },
     function onLoading( xhr ) {
-      /*_.viewerStateInfo.html(( xhr.loaded / xhr.total * 100 ).toFixed(2) + '%');*/
-      console.log(( xhr.loaded / xhr.total * 100 ).toFixed(2) + '%');
+      _.viewerStateInfo.html(( xhr.loaded / xhr.total * 100 ).toFixed(2) + '%');
     },
     function onError(/* error */) {
+      _.viewerStateInfo.html('Error');
       // Still needs to have an error handling set properly
     }
   );
@@ -237,11 +240,14 @@ ModelViewer.prototype.animationLoop = function animationLoop()
   var _ = this;
 
   // Animation loop, required for constant updating
-  function animate() {
-    _.renderer.render(_.scene, _.camera);
-    requestAnimationFrame(animate);
-  }
-  animate();
+  _.loop = function animate() {
+    if (_.renderer) {
+      _.renderer.render(_.scene, _.camera);
+      requestAnimationFrame(animate);
+    }
+  };
+
+  window.setTimeout(_.loop, 1000 / 30);
 };
 
 ModelViewer.prototype.createControls = function createControls()
