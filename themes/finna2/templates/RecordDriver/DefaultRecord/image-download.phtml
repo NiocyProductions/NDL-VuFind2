@@ -2,7 +2,6 @@
 <?php
     if (!$this->record($this->driver)->allowRecordImageDownload()
         || empty($rights['copyright'])
-        || empty($rights['link'])
         || $rights['copyright'] === $this->transEsc('usage_F')
     ) {
         return;
