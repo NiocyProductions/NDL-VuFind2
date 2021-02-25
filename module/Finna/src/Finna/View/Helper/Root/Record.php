@@ -579,10 +579,9 @@ class Record extends \VuFind\View\Helper\Root\Record
         if (!$this->driver->tryMethod('allowRecordImageDownload', [], true)) {
             return false;
         }
-        if ($rights = $this->driver->tryMethod('getUsageRights')) {
-            if (in_array('usage_F', $rights)) {
-                return false;
-            }
+        $rights = $this->driver->tryMethod('getUsageRights');
+        if (empty($rights) || in_array('usage_F', $rights)) {
+            return false;
         }
         $master = $this->recordImageHelper->getMasterImageWithInfo(0);
         if (!$master['pdf']) {
