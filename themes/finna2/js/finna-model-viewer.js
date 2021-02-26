@@ -1,5 +1,7 @@
-/* global finna, THREE, VuFind*/
+/* global finna, THREE, VuFind, DRACOLoader*/
 
+// Use 1 dracoloader in all of the loaders, so we don't create multiple instances
+var dracoLoader;
 function ModelViewer(trigger, options, scripts)
 {
   var _ = this;
@@ -11,6 +13,7 @@ function ModelViewer(trigger, options, scripts)
   }
   _.modelUrl = _.trigger.data('modelurl');
   _.loadInfo = _.trigger.data('modelload');
+  _.loaded = false;
   var modal = $('#model-modal').find('.model-wrapper').first().clone();
 
   _.trigger.finnaPopup({
@@ -20,6 +23,10 @@ function ModelViewer(trigger, options, scripts)
     classes: 'model-viewer',
     translations: options.translations,
     modal: modal,
+    beforeOpen: function onBeforeOpen() {
+      var popup = this;
+      $.fn.finnaPopup.closeOpen(popup.id);
+    },
     onPopupOpen: function onPopupOpen() {
       var popup = this;
       finna.layout.loadScripts(scripts, function onScriptsLoaded() {
@@ -50,7 +57,6 @@ function ModelViewer(trigger, options, scripts)
       }
       _.root = null;
       _.renderer = null;
-      _.scene = null;
       _.canvasParent = null;
       _.informations = {};
       _.controlsArea = null;
@@ -58,7 +64,6 @@ function ModelViewer(trigger, options, scripts)
       _.fullscreen = null;
       _.viewerStateInfo = null;
       _.informationsArea = null;
-      _.camera = null;
     }
   });
 }
@@ -200,38 +205,62 @@ ModelViewer.prototype.loadGLTF = function loadGLTF()
 {
   var _ = this;
 
-  var loader = new THREE.GLTFLoader();
-  loader.load(
-    _.modelPath,
-    function onLoad ( obj ) {
-      _.scene = obj.scene;
-      _.scene.background = _.envMap;
-      _.center = new THREE.Vector3();
-      _.cameraPosition = new THREE.Vector3(0, 0, 0);
-      _.setupScene();
-      _.viewerStateInfo.hide();
-      _.optionsArea.toggle(true);
-    },
-    function onLoading( xhr ) {
-      _.viewerStateInfo.html(( xhr.loaded / xhr.total * 100 ).toFixed(2) + '%');
-    },
-    function onError(/* error */) {
-      _.viewerStateInfo.html('Error');
-      // Still needs to have an error handling set properly
+  if (!_.loaded) {
+    var loader = new THREE.GLTFLoader();
+    if (typeof dracoLoader === 'undefined') {
+      dracoLoader = new THREE.DRACOLoader();
+      dracoLoader.setDecoderPath(VuFind.path + '/themes/finna2/js/vendor/draco/' );
+      loader.setDRACOLoader( dracoLoader );
     }
-  );
+    
+    loader.load(
+      _.modelPath,
+      function onLoad ( obj ) {
+        _.adjustScene(obj.scene);
+        _.center = new THREE.Vector3();
+        _.cameraPosition = new THREE.Vector3(0, 0, 0);
+        _.setupScene();
+        _.viewerStateInfo.hide();
+        _.optionsArea.toggle(true);
+      },
+      function onLoading( xhr ) {
+        _.viewerStateInfo.html(( xhr.loaded / xhr.total * 100 ).toFixed(2) + '%');
+      },
+      function onError(error) {
+        console.log(error);
+        _.viewerStateInfo.html('Error');
+        // Still needs to have an error handling set properly
+      }
+    );
+  } else {
+    _.createControls();
+    _.animationLoop();
+    _.viewerStateInfo.hide();
+    _.optionsArea.toggle(true);
+  }
 };
 
+ModelViewer.prototype.adjustScene = function adjustScene(scene)
+{
+  var _ = this;
+
+  if (_.loaded) {
+    return;
+  }
+
+  _.scene = scene;
+  _.scene.background = _.envMap;
+  var axesHelper = new THREE.AxesHelper( 5 );
+  _.scene.add( axesHelper );
+  _.createLights();
+};
 
 ModelViewer.prototype.setupScene = function setupScene()
 {
   var _ = this;
-  
-  _.createLights();
+
   _.createControls();
   _.initMesh();
-  var axesHelper = new THREE.AxesHelper( 5 );
-  _.scene.add( axesHelper );
   _.animationLoop();
 };
 
@@ -253,8 +282,10 @@ ModelViewer.prototype.animationLoop = function animationLoop()
 ModelViewer.prototype.createControls = function createControls()
 {
   var _ = this;
-  _.camera = new THREE.PerspectiveCamera( 50, _.size.x / _.size.y, 0.1, 1000 );
-  _.camera.position.set(_.cameraPosition.x, _.cameraPosition.y, _.cameraPosition.z);
+  if (!_.loaded) {
+    _.camera = new THREE.PerspectiveCamera( 50, _.size.x / _.size.y, 0.1, 1000 );
+    _.camera.position.set(_.cameraPosition.x, _.cameraPosition.y, _.cameraPosition.z);
+  }
 
   // Basic controls for scene, imagine being a satellite at the sky
   _.controls = new THREE.OrbitControls(_.camera, _.renderer.domElement);
@@ -273,60 +304,67 @@ function getTanDeg(deg) {
 ModelViewer.prototype.initMesh = function initMesh()
 {
   var _ = this;
-  var vertices = 0;
-  var triangles = 0;
-  var meshes = 0;
   var meshMaterial;
-  _.scene.traverse(function traverseMeshes(obj) {
-    if (obj.type === 'Mesh') {
-      meshes++;
-      meshMaterial = obj.material;
 
-      // Apply environmental map to the material, so lights look nicer
-      meshMaterial.envMap = _.envMap;
-      meshMaterial.depthWrite = !meshMaterial.transparent;
-      meshMaterial.bumpScale = 1;
-
-      // Apply encodings so glb looks better and update it if needed
-      if (meshMaterial.map) meshMaterial.map.encoding = _.encoding;
-      if (meshMaterial.emissiveMap) meshMaterial.emissiveMap.encoding = _.encoding;
-      if (meshMaterial.normalMap) meshMaterial.normalMap.encoding = _.encoding;
-      if (meshMaterial.map || meshMaterial.emissiveMap || meshMaterial.normalMap) meshMaterial.needsUpdate = true;
-
-      // Lets get available information about the model here so we can show them properly in information screen
-      var geo = obj.geometry;
-      if (typeof geo.isBufferGeometry !== 'undefined' && geo.isBufferGeometry) {
-        vertices += +geo.attributes.position.count;
-        triangles += +geo.index.count / 3;
+  if (!_.loaded) {
+    _.vertices = 0;
+    _.triangles = 0;
+    _.meshes = 0;
+    _.scene.traverse(function traverseMeshes(obj) {
+      if (obj.type === 'Mesh') {
+        _.meshes++;
+        meshMaterial = obj.material;
+  
+        // Apply environmental map to the material, so lights look nicer
+        meshMaterial.envMap = _.envMap;
+        meshMaterial.depthWrite = !meshMaterial.transparent;
+        meshMaterial.bumpScale = 1;
+  
+        // Apply encodings so glb looks better and update it if needed
+        if (meshMaterial.map) meshMaterial.map.encoding = _.encoding;
+        if (meshMaterial.emissiveMap) meshMaterial.emissiveMap.encoding = _.encoding;
+        if (meshMaterial.normalMap) meshMaterial.normalMap.encoding = _.encoding;
+        if (meshMaterial.map || meshMaterial.emissiveMap || meshMaterial.normalMap) meshMaterial.needsUpdate = true;
+  
+        // Lets get available information about the model here so we can show them properly in information screen
+        var geo = obj.geometry;
+        if (typeof geo.isBufferGeometry !== 'undefined' && geo.isBufferGeometry) {
+          _.vertices += +geo.attributes.position.count;
+          _.triangles += +geo.index.count / 3;
+        }
+        var newBox = new THREE.Box3().setFromObject(obj);
+  
+        //Calculate new center position if the bounding box is not centered
+        var newCenterVector = new THREE.Vector3();
+        newBox.getCenter(newCenterVector);
+        newCenterVector.negate();
+        obj.position.set(newCenterVector.x, newCenterVector.y, newCenterVector.z);
+  
+        //Calculate the distance for camera, so the object is properly adjusted in scene
+        var objectHeight = (newBox.max.y - newBox.min.y) * 1.05;
+        var objectWidth = (newBox.max.x - newBox.min.x) * 1.05;
+        var result = 0;
+        if (objectHeight >= objectWidth) {
+          result = objectHeight / getTanDeg(25);
+        } else {
+          result = objectWidth / getTanDeg(25);
+        }
+        _.cameraPosition = result;
+        _.camera.position.set(0, 0, _.cameraPosition);
+        var box = new THREE.BoxHelper( obj, 0xffff00 );
+        _.scene.add( box );
+        //obj.rotateX(Math.PI / 2);
       }
-      var newBox = new THREE.Box3().setFromObject(obj);
-
-      //Calculate new center position if the bounding box is not centered
-      var newCenterVector = new THREE.Vector3();
-      newBox.getCenter(newCenterVector);
-      newCenterVector.negate();
-      obj.position.set(newCenterVector.x, newCenterVector.y, newCenterVector.z);
-
-      //Calculate the distance for camera, so the object is properly adjusted in scene
-      var objectHeight = (newBox.max.y - newBox.min.y) * 1.05;
-      var objectWidth = (newBox.max.x - newBox.min.x) * 1.05;
-      var result = 0;
-      if (objectHeight >= objectWidth) {
-        result = objectHeight / getTanDeg(25);
-      } else {
-        result = objectWidth / getTanDeg(25);
-      }
-      _.camera.position.set(0, 0, result);
-      var box = new THREE.BoxHelper( obj, 0xffff00 );
-      _.scene.add( box );
-      //obj.rotateX(Math.PI / 2);
-    }
-  });
+    });
+    _.loaded = true;
+  } else {
+    _.camera.position.set(0, 0, _.cameraPosition);
+  }
 
   _.informationsArea.toggle(true);
-  _.setInformation('Vertices', vertices);
-  _.setInformation('Triangles', triangles);
-  _.setInformation('Meshes', meshes);
+  _.setInformation('Vertices', _.vertices);
+  _.setInformation('Triangles', _.triangles);
+  _.setInformation('Meshes', _.meshes);
   _.setInformation('Format', 'gLTF 2.0');
 };
 

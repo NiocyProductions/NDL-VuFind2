@@ -12,6 +12,9 @@ function FinnaPopup(trigger, params, id) {
   if (typeof params.onPopupInit !== 'undefined') {
     _.onPopupInit = params.onPopupInit;
   }
+  if (typeof params.beforeOpen !== 'undefined') {
+    _.beforeOpen = params.beforeOpen;
+  }
   _.addTrigger(trigger);
   // Popup modal stuff, backdrop and content etc
   _.cycle = typeof params.cycle !== 'undefined' ? params.cycle : true;
@@ -67,6 +70,8 @@ FinnaPopup.prototype.addTrigger = function addTrigger(trigger) {
   trigger.data('popup-' + _.id + '-index', _.triggers.length - 1);
   _.onPopupInit(trigger);
 };
+
+FinnaPopup.prototype.beforeOpen = function beforeOpen(){};
 
 FinnaPopup.prototype.customOpen = function customOpen(){};
 
@@ -213,7 +218,7 @@ FinnaPopup.prototype.onPopupInit = function onPopupInit(/*trigger*/) { };
 
 FinnaPopup.prototype.onPopupOpen = function onPopupOpen(open, close) {
   var _ = this;
-  $.fn.finnaPopup.closeOpen();
+  _.beforeOpen();
   _.show();
 
   if (typeof open !== 'undefined') {
@@ -306,12 +311,20 @@ FinnaPopup.prototype.focusTrap = function focusTrap(e) {
     }
     return undefined;
   };
-  $.fn.finnaPopup.closeOpen = function closeOpen() {
-    $.each($.fn.finnaPopup.popups, function callClose(key, obj) {
-      if (obj.isOpen) {
-        obj.onPopupClose();
+  $.fn.finnaPopup.closeOpen = function closeOpen(id) {
+    if (id) {
+      if (typeof $.fn.finnaPopup.popups[id] !== 'undefined') {
+        if ($.fn.finnaPopup.popups[id].isOpen) {
+          $.fn.finnaPopup.popups[id].onPopupClose();
+        }
       }
-    });
+    } else {
+      $.each($.fn.finnaPopup.popups, function callClose(key, obj) {
+        if (obj.isOpen) {
+          obj.onPopupClose();
+        }
+      });
+    }
   };
   $.fn.finnaPopup.isOpen = function isOpen() {
     var open = false;

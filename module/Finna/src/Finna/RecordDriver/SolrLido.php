@@ -483,12 +483,13 @@ class SolrLido extends \VuFind\RecordDriver\SolrDefault
                 $type = strtolower((string)$representation->attributes()->type);
                 $format = $linkResource->attributes()->formatResource ?? '';
                 $format = strtolower(trim((string)$format));
-                if (!in_array($format, ['glb', 'gltf'])) {
-                    continue;
-                }
                 switch ($type) {
+                case 'image_large':
+                case 'thumb':
                 case '3d_thumb':
-                    $model['preview'] = (string)$representation->linkResource;
+                    if (!isset($model['preview'])) {
+                        $model['preview'] = (string)$representation->linkResource;
+                    }
                     break;
                 case 'preview_3d':
                 case '3d malli':

@@ -11,5 +11,9 @@ echo json_encode([
     'js-orbitcontrols' => $this->headScript()->itemToString(
     $this->headScript()->createData('text/javascript', ['src' => 'vendor/OrbitControls.js', 'id' => 'js-orbitcontrols']),
     '', '', ''
+    ),
+    'js-dracoloader' => $this->headScript()->itemToString(
+    $this->headScript()->createData('text/javascript', ['src' => 'vendor/DRACOLoader.js', 'id' => 'js-dracoloader']),
+    '', '', ''
     )
 ]);
