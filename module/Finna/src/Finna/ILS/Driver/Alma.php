@@ -1215,35 +1215,41 @@ class Alma extends \VuFind\ILS\Driver\Alma implements TranslatorAwareInterface
                     = explode(':', $config['titleHoldBibLevels']);
             }
             if (!empty($params['id']) && !empty($params['patron']['id'])) {
-                $cacheKey = md5(
-                    'request-options-' . $params['id'] . '-'
-                    . $params['patron']['id']
-                );
-                $requestOptions = $this->getCachedData($cacheKey);
-                if (null === $requestOptions) {
+                if (empty($params['details']['item_id'])) {
                     // Check if we require the part_issue (description) field
-                    $requestOptionsPath = '/bibs/' . rawurlencode($params['id'])
-                        . '/request-options?user_id='
-                        . urlencode($params['patron']['id']);
-                    // Make the API request
-                    $requestOptions = $this->makeRequest($requestOptionsPath);
-                    $this->putCachedData($cacheKey, $requestOptions->asXML(), 120);
-                } else {
-                    $requestOptions = simplexml_load_string($requestOptions);
-                }
-                // Check possible request types from the API answer
-                $requestTypes = $requestOptions->xpath(
-                    '/request_options/request_option//type'
-                );
-                $types = [];
-                foreach ($requestTypes as $requestType) {
-                    $types[] = (string)$requestType;
-                }
-                if ($types === ['PURCHASE']) {
-                    $config['extraHoldFields']
-                        = empty($config['extraHoldFields'])
-                            ? 'part_issue'
-                            : $config['extraHoldFields'] . ':part_issue';
+                    $cacheKey = md5(
+                        'request-options-' . $params['id'] . '-'
+                        . $params['patron']['id']
+                    );
+                    $requestOptions = $this->getCachedData($cacheKey);
+                    if (null === $requestOptions) {
+                        $requestOptionsPath = '/bibs/' . rawurlencode($params['id'])
+                            . '/request-options?user_id='
+                            . urlencode($params['patron']['id']);
+                        // Make the API request
+                        $requestOptions = $this->makeRequest($requestOptionsPath);
+                        $this->putCachedData(
+                            $cacheKey,
+                            $requestOptions->asXML(),
+                            120
+                        );
+                    } else {
+                        $requestOptions = simplexml_load_string($requestOptions);
+                    }
+                    // Check possible request types from the API answer
+                    $requestTypes = $requestOptions->xpath(
+                        '/request_options/request_option//type'
+                    );
+                    $types = [];
+                    foreach ($requestTypes as $requestType) {
+                        $types[] = (string)$requestType;
+                    }
+                    if ($types === ['PURCHASE']) {
+                        $config['extraHoldFields']
+                            = empty($config['extraHoldFields'])
+                                ? 'part_issue'
+                                : $config['extraHoldFields'] . ':part_issue';
+                    }
                 }
 
                 // Add a flag so that checkRequestIsValid knows to check valid pickup
@@ -2168,9 +2174,8 @@ class Alma extends \VuFind\ILS\Driver\Alma implements TranslatorAwareInterface
             // Get Notes
             $data = $this->getHoldingsMarc(
                 $marc,
-                isset($this->config['Holdings']['notes'])
-                ? $this->config['Holdings']['notes']
-                : '852z'
+                $this->config['Holdings']['notes']
+                ?? '852z'
             );
             if ($data) {
                 $marcDetails['notes'] = $data;
@@ -2179,9 +2184,8 @@ class Alma extends \VuFind\ILS\Driver\Alma implements TranslatorAwareInterface
             // Get Summary (may be multiple lines)
             $data = $this->getHoldingsMarc(
                 $marc,
-                isset($this->config['Holdings']['summary'])
-                ? $this->config['Holdings']['summary']
-                : '866a'
+                $this->config['Holdings']['summary']
+                ?? '866a'
             );
             if ($data) {
                 $marcDetails['summary'] = $data;
@@ -3071,8 +3075,7 @@ class Alma extends \VuFind\ILS\Driver\Alma implements TranslatorAwareInterface
      */
     protected function getUpdateProfileFields()
     {
-        $fieldConfig = isset($this->config['updateProfile']['fields'])
-            ? $this->config['updateProfile']['fields'] : [];
+        $fieldConfig = $this->config['updateProfile']['fields'] ?? [];
         if ($disabled = ($this->config['updateProfile']['disabledFields'] ?? '')) {
             $result = [];
             $disabled = explode(':', $disabled);

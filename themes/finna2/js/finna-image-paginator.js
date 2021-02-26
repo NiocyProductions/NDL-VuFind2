@@ -54,7 +54,6 @@ function FinnaPaginator(element, images, settings) {
   _.moreBtn = null;
   _.lessBtn = null;
   _.pagerInfo = null;
-  _.creditLine = null;
   _.leftBtn = null;
   _.rightBtn = null;
   _.leftBrowseBtn = null;
@@ -151,7 +150,6 @@ FinnaPaginator.prototype.setReferences = function setReferences() {
   _.leftBrowseBtn = _.root.find('.next-image.left');
   _.rightBrowseBtn = _.root.find('.next-image.right');
   _.pagerInfo = _.settings.isList ? _.covers.find('.paginator-info') : _.trigger.find('.paginator-info');
-  _.creditLine = _.trigger.find('.image-credit-line');
   if (_.images.length < 2) {
     _.covers.hide();
     _.pagerInfo.hide();
@@ -266,7 +264,6 @@ FinnaPaginator.prototype.onNonZoomableClick = function onNonZoomableClick(image)
   _.setCanvasElement('noZoom');
   _.setCurrentVisuals();
   _.setPagerInfo();
-  _.setCreditLine(image.data('credit-line'));
   if (typeof _.settings.onlyImage === 'undefined' || _.settings.onlyImage === false) {
     _.loadImageInformation();
   }
@@ -291,7 +288,6 @@ FinnaPaginator.prototype.onLeafletImageClick = function onLeafletImageClick(imag
   _.setCanvasElement('leaflet');
   _.setCurrentVisuals();
   _.setPagerInfo();
-  _.setCreditLine(image.data('credit-line'));
 
   _.leafletHolder.eachLayer(function removeLayers(layer) {
     _.leafletHolder.removeLayer(layer);
@@ -368,31 +364,6 @@ FinnaPaginator.prototype.onLeafletImageClick = function onLeafletImageClick(imag
     _.setZoomButtons();
   };
   _.setBrowseButtons();
-};
-
-/**
- * Function to update the credit line
- */
-FinnaPaginator.prototype.setCreditLine = function setCreditLine(credits) {
-  var _ = this;
-  if (!credits) {
-    _.creditLine.addClass('hidden');
-    if (_.popup.creditLine) {
-      _.popup.creditLine.addClass('hidden');
-    }
-    return;
-  }
-
-  if (_.popup.creditLine) {
-    _.popup.creditLine.text(credits);
-    _.popup.creditLine.removeClass('hidden');
-    return;
-  }
-
-  if (_.creditLine) {
-    _.creditLine.text(credits);
-    _.creditLine.removeClass('hidden');
-  }
 };
 
 /**
@@ -549,11 +520,8 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
           $('.large-image-sidebar').addClass('visible-xs visible-sm');
         });
       }
-    } else {
-      if (_.trigger.hasClass('no-image')) {
-        _.trigger.removeClass('no-image');
-      }
-      _.setCreditLine(imagePopup.data('credit-line'));
+    } else if (_.trigger.hasClass('no-image')) {
+      _.trigger.removeClass('no-image');
     }
   }
 
@@ -569,7 +537,6 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
     }
   }
   _.imageDetail.html(imagePopup.data('description'));
-  _.setCreditLine('');
   img.off('load').on('load', function handleImage() {
     setImageProperties(this);
   });
@@ -788,8 +755,7 @@ FinnaPaginator.prototype.createImagePopup = function createImagePopup(image) {
     'data-largest': image.largest,
     'data-description': image.description,
     'href': (!_.settings.isList && _.settings.enableImageZoom) ? image.largest : image.medium,
-    'data-alt': image.alt,
-    'data-credit-line': image.creditLine
+    'data-alt': image.alt
   });
 
   return holder;
@@ -866,7 +832,6 @@ FinnaPaginator.prototype.createPopupObject = function createPopupObject(popup) {
   _.popup.rightBrowseBtn = popup.find('.next-image.right');
   _.popup.summary = popup.find('.imagepopup-holder .summary');
   _.popup.covers.removeClass('mini-paginator');
-  _.popup.creditLine = popup.find('.image-credit-line');
   _.popup.collapseArea = popup.find('.collapse-content-holder');
   _.canvasElements = {
     leaflet: popup.find('.leaflet-map-image'),
@@ -904,7 +869,6 @@ FinnaPaginator.prototype.setTrigger = function setTrigger(imagePopup) {
   _.setBrowseButtons(_.settings.isList);
   _.setPagerInfo();
   _.setCurrentVisuals();
-  _.setCreditLine(imagePopup.data('credit-line'));
   var modal = $('#imagepopup-modal').find('.imagepopup-holder').clone();
 
   if (_.settings.triggerClick === 'none') {
