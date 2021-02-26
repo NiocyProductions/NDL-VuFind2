@@ -1,6 +1,5 @@
 /* global finna, VuFind, L */
 var imageElement = '<a draggable="false" href="" class="image-popup image-popup-navi hidden-print"></a>';
-var timeOut = null;
 
 var defaults = {
   recordId: 0,
@@ -50,6 +49,7 @@ function FinnaPaginator(element, images, settings) {
   _.setMaxImages();
   
   // Needed references
+  _.timeOut = null;
   _.imageDetail = _.root.find('.recordcover-image-detail .image-description');
   _.moreBtn = null;
   _.lessBtn = null;
@@ -296,14 +296,14 @@ FinnaPaginator.prototype.onLeafletImageClick = function onLeafletImageClick(imag
   _.leafletHolder.setMinZoom(1);
   var img = new Image();
   img.src = image.data('largest');
-  timeOut = setTimeout(function onLoadStart() {
+  _.timeOut = setTimeout(function onLoadStart() {
     _.leafletLoader.addClass('loading');
   }, 100);
 
   img.onload = function onLoadImg() {
-    if (timeOut !== null) {
-      clearTimeout(timeOut);
-      timeOut = null;
+    if (_.timeOut !== null) {
+      clearTimeout(_.timeOut);
+      _.timeOut = null;
     }
     if (_.leafletHolder.length === 0 || typeof _.canvasElements.leaflet === 'undefined') {
       return;
