@@ -213,7 +213,7 @@ FinnaPaginator.prototype.setEvents = function setEvents() {
     });
     _.setButtons();
   }
-  _.imagePopup.on('click', function setTriggerEvents(e){
+  _.imagePopup.off('click').on('click', function setTriggerEvents(e){
     e.preventDefault();
     _.setTrigger($(this));
     if (!_.settings.isList) {
@@ -444,6 +444,7 @@ FinnaPaginator.prototype.setPopupImageState = function setPopupImageState(type) 
     _.imagePopup.off('click').on('click', function onImageClick(e){
       e.preventDefault();
       _.onLeafletImageClick($(this));
+      _.alterHash();
     });
     _.leafletLoader = _.canvasElements.leaflet.find('.leaflet-image-loading');
   
@@ -939,6 +940,9 @@ FinnaPaginator.prototype.setTrigger = function setTrigger(imagePopup) {
       _.imagePopup.off('click').on('click', function setTriggerEvents(e){
         e.preventDefault();
         _.setTrigger($(this));
+        if (!_.settings.isList) {
+          _.alterHash();
+        }
       });
       _.canvasElements = {};
       _.setMaxImages();
