@@ -125,7 +125,7 @@ FinnaPaginator.prototype.init = function init() {
 
     // Lets see if we have a link to load this page
     _.loadPage(0, _.openImageIndex);
-    _.setTrigger(_.track.find('a:first'));
+    _.setTrigger(_.track.find('a[index=' + _.openImageIndex + ']'));
     _.addDocumentLoadCallback(function showLeftsidebar() {
       $('.large-image-sidebar').removeClass('hidden');
     });
@@ -239,7 +239,9 @@ FinnaPaginator.prototype.readHash = function readHash() {
   if (window.location.hash) {
     var hash = window.location.hash.substring(1);
     if (!isNaN(hash)) {
-      _.openImageIndex = hash;
+      if (hash < _.images.length && hash >= 0) {
+        _.openImageIndex = hash;
+      }
     }
   }
 };
@@ -588,7 +590,11 @@ FinnaPaginator.prototype.loadPage = function loadPage(direction, openImageIndex,
   }
 
   if (typeof openImageIndex !== 'undefined' && openImageIndex !== null) {
-    _.offSet = +openImageIndex;
+    var desiredImage = +openImageIndex;
+    if (desiredImage > _.images.length || desiredImage < 0) {
+      desiredImage = 0;
+    }
+    _.offSet = desiredImage;
   }
 
   _.offSet += _.settings.imagesPerPage * direction;
