@@ -124,7 +124,7 @@ FinnaPaginator.prototype.init = function init() {
     _.setEvents();
 
     // Lets see if we have a link to load this page
-    _.loadPage(0, _.openImageIndex || 0);
+    _.loadPage(0, _.openImageIndex);
     _.setTrigger(_.track.find('a:first'));
     _.addDocumentLoadCallback(function showLeftsidebar() {
       $('.large-image-sidebar').removeClass('hidden');
