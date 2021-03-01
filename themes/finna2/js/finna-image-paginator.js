@@ -444,7 +444,9 @@ FinnaPaginator.prototype.setPopupImageState = function setPopupImageState(type) 
     _.imagePopup.off('click').on('click', function onImageClick(e){
       e.preventDefault();
       _.onLeafletImageClick($(this));
-      _.alterHash();
+      if (!_.settings.isList) {
+        _.alterHash();
+      }
     });
     _.leafletLoader = _.canvasElements.leaflet.find('.leaflet-image-loading');
   
