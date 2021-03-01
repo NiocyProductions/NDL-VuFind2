@@ -120,8 +120,11 @@ FinnaPaginator.prototype.init = function init() {
     _.moreBtn = _.root.find('.show-more-images');
     _.lessBtn = _.root.find('.show-less-images');
     toggleButtons(_.moreBtn, _.lessBtn);
+    _.readHash();
     _.setEvents();
-    _.loadPage(0);
+
+    // Lets see if we have a link to load this page
+    _.loadPage(0, _.openImageIndex || 0);
     _.setTrigger(_.track.find('a:first'));
     _.addDocumentLoadCallback(function showLeftsidebar() {
       $('.large-image-sidebar').removeClass('hidden');
@@ -213,7 +216,32 @@ FinnaPaginator.prototype.setEvents = function setEvents() {
   _.imagePopup.on('click', function setTriggerEvents(e){
     e.preventDefault();
     _.setTrigger($(this));
+    if (!_.settings.isList) {
+      _.alterHash();
+    }
   });
+};
+
+/**
+ * Set current open image to url hash
+ */
+FinnaPaginator.prototype.alterHash = function alterHash() {
+  var _ = this;
+  var hash = '#' + _.openImageIndex;
+  history.replaceState(undefined, undefined, hash);
+};
+
+/**
+ * Get desired image from url hash
+ */
+FinnaPaginator.prototype.readHash = function readHash() {
+  var _ = this;
+  if (window.location.hash) {
+    var hash = window.location.hash.substring(1);
+    if (!isNaN(hash)) {
+      _.openImageIndex = hash;
+    }
+  }
 };
 
 /**
