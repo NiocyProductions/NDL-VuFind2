@@ -242,7 +242,7 @@ FinnaPaginator.prototype.readQuery = function readQuery() {
   var urlParams = new URLSearchParams(queryString);
   if (urlParams.has('imgind')) {
     var imgind = +urlParams.get('imgind');
-    if (imgind > 0 || imgind < _.images.length) {
+    if (!isNaN(imgind) && (imgind > 0 || imgind < _.images.length)) {
       _.openImageIndex = imgind;
     }
   }
