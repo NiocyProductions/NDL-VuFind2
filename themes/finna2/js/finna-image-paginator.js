@@ -120,7 +120,7 @@ FinnaPaginator.prototype.init = function init() {
     _.moreBtn = _.root.find('.show-more-images');
     _.lessBtn = _.root.find('.show-less-images');
     toggleButtons(_.moreBtn, _.lessBtn);
-    _.readHash();
+    _.readQuery();
     _.setEvents();
 
     // Lets see if we have a link to load this page
@@ -217,31 +217,33 @@ FinnaPaginator.prototype.setEvents = function setEvents() {
     e.preventDefault();
     _.setTrigger($(this));
     if (!_.settings.isList) {
-      _.alterHash();
+      _.alterQuery();
     }
   });
 };
 
 /**
- * Set current open image to url hash
+ * Set desired image index to query
  */
-FinnaPaginator.prototype.alterHash = function alterHash() {
+FinnaPaginator.prototype.alterQuery = function alterQuery() {
   var _ = this;
-  var hash = '#' + _.openImageIndex;
-  history.replaceState(undefined, undefined, hash);
+  var urlParams = new URLSearchParams(window.location.search);
+  urlParams.set('imgind', _.openImageIndex);
+  var newRelativePathQuery = window.location.pathname + '?' + urlParams.toString() + window.location.hash;
+  history.pushState(null, '', newRelativePathQuery);
 };
 
 /**
- * Get desired image from url hash
+ * Get desired image index from query
  */
-FinnaPaginator.prototype.readHash = function readHash() {
+FinnaPaginator.prototype.readQuery = function readQuery() {
   var _ = this;
-  if (window.location.hash) {
-    var hash = window.location.hash.substring(1);
-    if (!isNaN(hash)) {
-      if (hash < _.images.length && hash >= 0) {
-        _.openImageIndex = hash;
-      }
+  var queryString = window.location.search;
+  var urlParams = new URLSearchParams(queryString);
+  if (urlParams.has('imgind')) {
+    var imgind = +urlParams.get('imgind');
+    if (imgind > 0 || imgind < _.images.length) {
+      _.openImageIndex = imgind;
     }
   }
 };
@@ -445,7 +447,7 @@ FinnaPaginator.prototype.setPopupImageState = function setPopupImageState(type) 
       e.preventDefault();
       _.onLeafletImageClick($(this));
       if (!_.settings.isList) {
-        _.alterHash();
+        _.alterQuery();
       }
     });
     _.leafletLoader = _.canvasElements.leaflet.find('.leaflet-image-loading');
@@ -943,7 +945,7 @@ FinnaPaginator.prototype.setTrigger = function setTrigger(imagePopup) {
         e.preventDefault();
         _.setTrigger($(this));
         if (!_.settings.isList) {
-          _.alterHash();
+          _.alterQuery();
         }
       });
       _.canvasElements = {};
