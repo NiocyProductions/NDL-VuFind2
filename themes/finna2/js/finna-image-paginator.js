@@ -226,7 +226,7 @@ FinnaPaginator.prototype.setEvents = function setEvents() {
 FinnaPaginator.prototype.alterQuery = function alterQuery() {
   var _ = this;
   var urlParams = new URLSearchParams(window.location.search);
-  urlParams.set('imgind', _.openImageIndex);
+  urlParams.set('imgid', _.openImageIndex + 1);
   var newRelativePathQuery = window.location.pathname + '?' + urlParams.toString() + window.location.hash;
   history.replaceState(undefined, undefined, newRelativePathQuery);
 };
@@ -238,10 +238,13 @@ FinnaPaginator.prototype.readQuery = function readQuery() {
   var _ = this;
   var queryString = window.location.search;
   var urlParams = new URLSearchParams(queryString);
-  if (urlParams.has('imgind')) {
-    var imgind = +urlParams.get('imgind');
-    if (!isNaN(imgind) && (imgind > 0 || imgind < _.images.length)) {
-      _.openImageIndex = imgind;
+  if (urlParams.has('imgid')) {
+    var imgid = +urlParams.get('imgid');
+    if (!isNaN(imgid)) {
+      imgid -= 1;
+      if (imgid > 0 || imgid < _.images.length) {
+        _.openImageIndex = imgid;
+      }
     }
   }
 };
