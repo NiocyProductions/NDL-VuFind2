@@ -226,7 +226,7 @@ FinnaPaginator.prototype.setEvents = function setEvents() {
 FinnaPaginator.prototype.alterQuery = function alterQuery() {
   var _ = this;
   var urlParams = new URLSearchParams(window.location.search);
-  urlParams.set('imgid', _.openImageIndex + 1);
+  urlParams.set('imgid', +_.openImageIndex + 1);
   var newRelativePathQuery = window.location.pathname + '?' + urlParams.toString() + window.location.hash;
   history.replaceState(undefined, undefined, newRelativePathQuery);
 };
@@ -242,7 +242,7 @@ FinnaPaginator.prototype.readQuery = function readQuery() {
     var imgid = +urlParams.get('imgid');
     if (!isNaN(imgid)) {
       imgid -= 1;
-      if (imgid > 0 || imgid < _.images.length) {
+      if (imgid > 0 && imgid < _.images.length) {
         _.openImageIndex = imgid;
       }
     }
