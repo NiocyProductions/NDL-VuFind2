@@ -228,7 +228,7 @@ FinnaPaginator.prototype.alterQuery = function alterQuery() {
   var urlParams = new URLSearchParams(window.location.search);
   urlParams.set('imgind', _.openImageIndex);
   var newRelativePathQuery = window.location.pathname + '?' + urlParams.toString() + window.location.hash;
-  history.pushState(null, '', newRelativePathQuery);
+  history.replaceState(undefined, undefined, newRelativePathQuery);
 };
 
 /**
