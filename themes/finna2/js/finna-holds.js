@@ -120,13 +120,8 @@ finna.changeHolds = (function finnaChangeHolds() {
         .done(function onChangeRequestStatusDone(response) {
           spinnerChange.addClass('hidden');
           if (response.data.success) {
-            if (frozen) {
-              container.find('.hold-status-active').addClass('hidden');
-              container.find('.hold-status-frozen').removeClass('hidden');
-            } else {
-              container.find('.hold-status-active').removeClass('hidden');
-              container.find('.hold-status-frozen').addClass('hidden');
-            }
+            container.find('.hold-status-active').toggleClass('hidden', frozen);
+            container.find('.hold-status-frozen').toggleClass('hidden', !frozen);
           } else {
             container.append(errorOccured);
           }

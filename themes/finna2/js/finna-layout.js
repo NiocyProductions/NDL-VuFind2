@@ -1,21 +1,6 @@
 /*global VuFind, videojs, checkSaveStatuses, action, finna, initFacetTree, priorityNav */
 finna.layout = (function finnaLayout() {
-  var _fixFooterTimeout = null;
   var currentOpenTooltips = [];
-
-  function initResizeListener() {
-    var intervalId = false;
-    $(window).on('resize', function onResizeWindow(/*e*/) {
-      clearTimeout(intervalId);
-      intervalId = setTimeout(function onTimeout() {
-        var data = {
-          w: $(window).width(),
-          h: $(window).height()
-        };
-        $(window).trigger('resize.screen.finna', data);
-      }, 100);
-    });
-  }
 
   function isTouchDevice() {
     return (('ontouchstart' in window)
@@ -36,37 +21,18 @@ finna.layout = (function finnaLayout() {
     });
   }
 
-  function initFixFooter() {
-    $(window).resize(function onResizeWindow(/*e*/) {
-      if (!_fixFooterTimeout) {
-        _fixFooterTimeout = setTimeout(function fixFooterCallback() {
-          _fixFooterTimeout = null;
-          $('footer').height('auto');
-          var detectHeight = $(window).height() - $('body').height();
-          if (detectHeight > 0) {
-            var expandedFooter = $('footer').height() + detectHeight;
-            $('footer').height(expandedFooter);
-          }
-        }, 50);
-      }
-    }).resize();
-  }
-
   function initLocationService(_holder) {
     var holder = typeof _holder === 'undefined' ? $(document) : _holder;
 
-    function closeModalCallback(modal) {
-      modal.removeClass('location-service location-service-qrcode');
-      modal.find('.modal-dialog').removeClass('modal-lg');
-    }
-
-    holder.find('a.location-service.location-service-modal').click(function onClickModalLink(/*e*/) {
+    holder.find('a.location-service.location-service-modal').on('click', function onClickModalLink(/*e*/) {
       var modal = $('#modal');
+      var dialog = modal.find('.modal-dialog');
       modal.addClass('location-service');
-      modal.find('.modal-dialog').addClass('modal-lg');
+      dialog.addClass('modal-lg');
 
-      $('#modal').one('hidden.bs.modal', function onHiddenModal() {
-        closeModalCallback($(this));
+      modal.one('hidden.bs.modal', function onHiddenModal() {
+        modal.removeClass('location-service location-service-qrcode');
+        dialog.removeClass('modal-lg');
       });
       modal.find('.modal-body').load($(this).data('lightbox-href') + '&layout=lightbox');
       modal.modal();
@@ -159,16 +125,17 @@ finna.layout = (function finnaLayout() {
   function initHelpTabs() {
     if ($('.help-tabs')[0]) {
       $('.help-tab').each(function initHelpTab() {
-        if ($(this).hasClass('active')) {
-          $(this).focus();
+        var tab = $(this);
+        if (tab.hasClass('active')) {
+          tab.focus();
         }
-        var url = $(this).data('url');
-        $(this).keydown(function onTabEnter(event) {
+        var url = tab.data('url');
+        tab.on('keydown', function onTabEnter(event) {
           if (event.which === 13) {
             window.location.href = url;
           }
         });
-        $(this).click(function onTabClick() {
+        tab.on('click', function onTabClick() {
           window.location.href = url;
         });
       });
@@ -176,14 +143,14 @@ finna.layout = (function finnaLayout() {
   }
 
   function initMobileNarrowSearch() {
-    $('.mobile-navigation .sidebar-navigation, .sidebar h1').unbind('click').click(function onClickMobileNav(e) {
+    $('.mobile-navigation .sidebar-navigation, .sidebar h1').off('click').on('click', function onClickMobileNav(e) {
       if ($(e.target).attr('class') !== 'fa fa-info-big') {
         $('.sidebar').toggleClass('open');
       }
       $('.mobile-navigation .sidebar-navigation i').toggleClass('fa-arrow-down');
       $('body').toggleClass('prevent-scroll');
     });
-    $('.mobile-navigation .sidebar-navigation .active-filters').unbind('click').click(function onClickMobileActiveFilters() {
+    $('.mobile-navigation .sidebar-navigation .active-filters').off('click').on('click', function onClickMobileActiveFilters() {
       $('.sidebar').scrollTop(0);
     });
   }
@@ -192,16 +159,18 @@ finna.layout = (function finnaLayout() {
     $('.checkboxFilter:not(.mylist-select-all) .checkbox input').click(function onClickCheckbox() {
       $(this).closest('.checkbox').toggleClass('checked');
       var nonChecked = true;
+      var select = $('.mylist-functions button, .mylist-functions select');
+      var jumpMenu = $('.mylist-functions .jump-menu-style');
       $('.myresearch-row .checkboxFilter .checkbox').each(function setupCheckbox() {
         if ($(this).hasClass('checked')) {
-          $('.mylist-functions button, .mylist-functions select').removeAttr('disabled');
-          $('.mylist-functions .jump-menu-style').removeClass('disabled');
+          select.removeAttr('disabled');
+          jumpMenu.removeClass('disabled');
           nonChecked = false;
         }
       });
       if (nonChecked) {
-        $('.mylist-functions button, .mylist-functions select').attr('disabled', true);
-        $('.mylist-functions .jump-menu-style').addClass('disabled');
+        select.attr('disabled', true);
+        jumpMenu.addClass('disabled');
       }
     });
 
@@ -229,27 +198,17 @@ finna.layout = (function finnaLayout() {
         scrollTop: $('.recordProvidedBy').offset().top
       }, 500);
     });
-    if ($('.floating-feedback-btn').length) {
-      var feedbackBtnOffset = $('.floating-feedback-btn').offset().top;
+    var feedbackBtn = $('.floating-feedback-btn');
+    if (feedbackBtn.length) {
+      var feedbackBtnOffset = feedbackBtn.offset().top;
       $(window).scroll(function onScrollWindow(/*event*/) {
-        var scroll = $(window).scrollTop();
-        if (scroll > feedbackBtnOffset) {
-          $('.floating-feedback-btn').addClass('fixed');
-        }
-        else {
-          $('.floating-feedback-btn').removeClass('fixed');
-        }
+        feedbackBtnOffset.toggleClass('fixed', $(window).scrollTop() > feedbackBtnOffset);
       });
     }
-    if ($('.template-dir-record .back-to-up').length) {
+    var backUp = $('.template-dir-record .back-to-up');
+    if (backUp.length) {
       $(window).scroll(function onScrollWindow(/*event*/) {
-        var scroll = $(window).scrollTop();
-        if (scroll > 2000) {
-          $('.template-dir-record .back-to-up').removeClass('hidden');
-        }
-        else {
-          $('.template-dir-record .back-to-up').addClass('hidden');
-        }
+        backUp.toggleClass('hidden', $(window).scrollTop() <= 2000);
       });
     }
   }
@@ -259,15 +218,11 @@ finna.layout = (function finnaLayout() {
       $('.autocomplete-results').addClass('checkbox-active');
     }
     $('.searchForm_lookfor').on('input', function onInputLookfor() {
-      var form = $(this).closest('.searchForm');
-      if ($(this).val() !== '' ) {
-        form.find('.clear-button').removeClass('hidden');
-      } else {
-        form.find('.clear-button').addClass('hidden');
-      }
+      var lfor = $(this);
+      lfor.closest('.searchForm').find('.clear-button').toggleClass('hidden', lfor.val() === '');
     });
 
-    $('.clear-button').click(function onClickClear() {
+    $('.clear-button').on('click', function onClickClear() {
       var form = $(this).closest('.searchForm');
       form.find('.searchForm_lookfor').val('');
       form.find('.clear-button').addClass('hidden');
@@ -290,11 +245,7 @@ finna.layout = (function finnaLayout() {
     });
 
     if (sessionStorage.getItem('vufind_retain_filters')) {
-      if (sessionStorage.getItem('vufind_retain_filters') === 'true') {
-        $('.searchFormKeepFilters').closest('.checkbox').addClass('checked');
-      } else {
-        $('.searchFormKeepFilters').closest('.checkbox').removeClass('checked');
-      }
+      $('.searchFormKeepFilters').closest('.checkbox').toggleClass('checked', sessionStorage.getItem('vufind_retain_filters') === 'true');
     }
   }
 
@@ -344,7 +295,7 @@ finna.layout = (function finnaLayout() {
   function initCondensedList(_holder) {
     var holder = typeof _holder === 'undefined' ? $(document) : _holder;
 
-    holder.find('.condensed-collapse-toggle').off('click').click(function onClickCollapseToggle(event) {
+    holder.find('.condensed-collapse-toggle').off('click').on('click', function onClickCollapseToggle(event) {
       if ((event.target.nodeName) !== 'A' && (event.target.nodeName) !== 'MARK') {
         holder = $(this).parent().parent();
         holder.toggleClass('open');
@@ -418,8 +369,8 @@ finna.layout = (function finnaLayout() {
 
   function initJumpMenus(_holder) {
     var holder = typeof _holder === 'undefined' ? $('body') : _holder;
-    holder.find('select.jumpMenu').unbind('change').change(function onChangeJumpMenu() { $(this).closest('form').submit(); });
-    holder.find('select.jumpMenuUrl').unbind('change').change(function onChangeJumpMenuUrl(e) { window.location.href = $(e.target).val(); });
+    holder.find('select.jumpMenu').unbind('change').on('change', function onChangeJumpMenu() { $(this).closest('form').submit(); });
+    holder.find('select.jumpMenuUrl').unbind('change').on('change', function onChangeJumpMenuUrl(e) { window.location.href = $(e.target).val(); });
   }
 
   function initSecondaryLoginField() {
@@ -428,7 +379,7 @@ finna.layout = (function finnaLayout() {
 
   function initILSPasswordRecoveryLink(links, idPrefix) {
     var searchPrefix = idPrefix ? '#' + idPrefix : '#';
-    $(searchPrefix + 'target').change(function onChangeLoginTargetLink() {
+    $(searchPrefix + 'target').on('change', function onChangeLoginTargetLink() {
       var target = $(searchPrefix + 'target').val();
       if (links[target]) {
         $('#login_library_card_recovery').attr('href', links[target]).show();
@@ -440,7 +391,7 @@ finna.layout = (function finnaLayout() {
 
   function initILSSelfRegistrationLink(links, idPrefix) {
     var searchPrefix = idPrefix ? '#' + idPrefix : '#';
-    $(searchPrefix + 'target').change(function onChangeLoginTargetLink() {
+    $(searchPrefix + 'target').on('change', function onChangeLoginTargetLink() {
       var target = $(searchPrefix + 'target').val();
       if (links[target]) {
         $('#login_library_card_register').attr('href', links[target]).show();
@@ -572,7 +523,7 @@ finna.layout = (function finnaLayout() {
   }
 
   function initOrganisationPageLinks() {
-    $('.organisation-page-link').not('.done').map(function setupOrganisationPageLinks() {
+    $('.organisation-page-link').not('.done').each(function setupOrganisationPageLinks() {
       $(this).one('inview', function onInViewLink() {
         var holder = $(this);
         var organisationId = $(this).data('organisation');
@@ -592,10 +543,9 @@ finna.layout = (function finnaLayout() {
   }
 
   function initOrganisationInfoWidgets() {
-    $('.organisation-info[data-init="1"]').map(function setupOrganisationInfo() {
-      var service = finna.organisationInfo;
+    $('.organisation-info[data-init="1"]').each(function setupOrganisationInfo() {
       var widget = finna.organisationInfoWidget;
-      widget.init($(this), service);
+      widget.init($(this), finna.organisationInfo);
       widget.loadOrganisationList();
     });
   }
@@ -693,13 +643,14 @@ finna.layout = (function finnaLayout() {
   }
 
   function initFiltersToggle () {
-    if ($(window).width() <= 991) {
+    var win = $(window);
+    if (win.width() <= 991) {
       $('.finna-filters .filters').addClass('hidden');
       $('.finna-filters .filters-toggle .toggle-text').html(VuFind.translate('show_filters'));
     }
 
-    $(window).resize(function checkFiltersEnabled(){
-      if ($(window).width() > 991 && $('.finna-filters .filters').hasClass('hidden')) {
+    win.on('resize', function checkFiltersEnabled() {
+      if ($(this).width() > 991 && $('.finna-filters .filters').hasClass('hidden')) {
         $('.finna-filters .filters').removeClass('hidden');
       }
     });
@@ -826,7 +777,6 @@ finna.layout = (function finnaLayout() {
       initScrollRecord();
       initJumpMenus();
       initAnchorNavigationLinks();
-      initFixFooter();
       initTruncate();
       initContentNavigation();
       initHelpTabs();
@@ -834,7 +784,6 @@ finna.layout = (function finnaLayout() {
       initCheckboxClicks();
       initToolTips();
       initModalToolTips();
-      initResizeListener();
       initScrollLinks();
       initSearchboxFunctions();
       initCondensedList();
