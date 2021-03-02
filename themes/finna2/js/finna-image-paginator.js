@@ -122,8 +122,6 @@ FinnaPaginator.prototype.init = function init() {
     toggleButtons(_.moreBtn, _.lessBtn);
     _.readQuery();
     _.setEvents();
-
-    // Lets see if we have a link to load this page
     _.loadPage(0, _.openImageIndex);
     _.setTrigger(_.track.find('a[index=' + _.openImageIndex + ']'));
     _.addDocumentLoadCallback(function showLeftsidebar() {
