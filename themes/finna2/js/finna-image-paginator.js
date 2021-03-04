@@ -157,10 +157,10 @@ FinnaPaginator.prototype.setReferences = function setReferences() {
   if (_.images.length <= _.settings.imagesPerRow) {
     $('.recordcovers-more').hide();
   }
-  _.leftBrowseBtn.off('click').click(function browseLeft() {
+  _.leftBrowseBtn.off('click').on('click', function browseLeft() {
     _.onBrowseButton(-1);
   });
-  _.rightBrowseBtn.off('click').click(function browseRight() {
+  _.rightBrowseBtn.off('click').on('click', function browseRight() {
     _.onBrowseButton(1);
   });
 };
@@ -187,25 +187,25 @@ FinnaPaginator.prototype.setEvents = function setEvents() {
   var _ = this;
 
   if (!_.settings.isList) {
-    _.leftBtn.click(function loadImages() {
+    _.leftBtn.on('click', function loadImages() {
       _.loadPage(-1);
     });
-    _.rightBtn.click(function loadImages() {
+    _.rightBtn.on('click', function loadImages() {
       _.loadPage(1);
     });
-    _.moreBtn.click(function setImages() {
+    _.moreBtn.on('click', function setImages() {
       toggleButtons(_.lessBtn, _.moreBtn);
       _.loadPage(0, null, _.settings.imagesPerRow * _.settings.maxRows);
     });
-    _.lessBtn.click(function setImages() {
+    _.lessBtn.on('click', function setImages() {
       toggleButtons(_.moreBtn, _.lessBtn);
       _.loadPage(0, null, _.settings.imagesPerRow);
     });
   } else {
-    _.leftBtn.off('click').click(function setImage(){
+    _.leftBtn.off('click').on('click', function setImage(){
       _.onListButton(-1);
     });
-    _.rightBtn.off('click').click(function setImage(){
+    _.rightBtn.off('click').on('click', function setImage(){
       _.onListButton(1);
     });
     _.setButtons();
@@ -698,7 +698,7 @@ FinnaPaginator.prototype.loadImageInformation = function loadImageInformation() 
     });
 
     if ($('.imagepopup-holder .feedback-record')[0] || $('.imagepopup-holder .save-record')[0]) {
-      $('.imagepopup-holder .feedback-record, .imagepopup-holder .save-record').click(function onClickActionLink(/*e*/) {
+      $('.imagepopup-holder .feedback-record, .imagepopup-holder .save-record').on('click', function onClickActionLink(/*e*/) {
         $.fn.finnaPopup.closeOpen();
       });
     }

@@ -48,7 +48,7 @@ finna.changeHolds = (function finnaChangeHolds() {
     }
 
     var changeHolds = $('.changeHolds');
-    changeHolds.click(function onClickChangeHolds() {
+    changeHolds.on('click', function onClickChangeHolds() {
       var hold = $(this);
       $('.hold-change-success').remove();
       $('.hold-change-error').remove();
@@ -99,7 +99,6 @@ finna.changeHolds = (function finnaChangeHolds() {
 
     function changeHoldStatus(container, requestId, recordId, itemId, frozen) {
       var spinnerChange = container.find('.status-change-load-indicator');
-
       $('.hold-change-success').remove();
       $('.hold-change-error').remove();
       spinnerChange.removeClass('hidden');
@@ -132,7 +131,7 @@ finna.changeHolds = (function finnaChangeHolds() {
         });
     }
 
-    $('.hold-status-freeze').click(function onClickHoldFreeze() {
+    $('.hold-status-freeze').on('click', function onClickHoldFreeze() {
       var container = $(this).closest('.change-hold-status');
       var requestId = container.data('requestId');
       var recordId = container.data('recordId');
@@ -141,7 +140,7 @@ finna.changeHolds = (function finnaChangeHolds() {
       return false;
     });
 
-    $('.hold-status-release').click(function onClickHoldRelease() {
+    $('.hold-status-release').on('click', function onClickHoldRelease() {
       var container = $(this).closest('.change-hold-status');
       var requestId = container.data('requestId');
       var recordId = container.data('recordId');

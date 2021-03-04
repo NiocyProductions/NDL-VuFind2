@@ -156,7 +156,7 @@ finna.layout = (function finnaLayout() {
   }
 
   function initCheckboxClicks() {
-    $('.checkboxFilter:not(.mylist-select-all) .checkbox input').click(function onClickCheckbox() {
+    $('.checkboxFilter:not(.mylist-select-all) .checkbox input').on('click', function onClickCheckbox() {
       $(this).closest('.checkbox').toggleClass('checked');
       var nonChecked = true;
       var select = $('.mylist-functions button, .mylist-functions select');
@@ -177,7 +177,7 @@ finna.layout = (function finnaLayout() {
     var myListSelectAll = $('.checkboxFilter.mylist-select-all');
     var myListJumpMenu = $('.mylist-functions .jump-menu-style');
     var myListFunctions = $('.mylist-functions button, .mylist-functions select');
-    myListSelectAll.find('.checkbox .checkbox-select-all').click(function onClickCheckbox() {
+    myListSelectAll.find('.checkbox .checkbox-select-all').on('click', function onClickCheckbox() {
       var checkboxes = $('.myresearch-row .checkboxFilter .checkbox, .checkboxFilter.mylist-select-all .checkbox');
       if ($(this).closest('.checkbox').hasClass('checked')) {
         var isEverythingChecked = !$('.myresearch-row .checkboxFilter .checkbox').not('.checked').length;
@@ -193,7 +193,7 @@ finna.layout = (function finnaLayout() {
   }
 
   function initScrollLinks() {
-    $('.library-link').click(function onClickLibraryLink() {
+    $('.library-link').on('click', function onClickLibraryLink() {
       $('html, body').animate({
         scrollTop: $('.recordProvidedBy').offset().top
       }, 500);
@@ -254,7 +254,7 @@ finna.layout = (function finnaLayout() {
     // show hover tooltips on grid image notes
     if (window.matchMedia("(min-width: 768px)").matches) {
       holder.find('.grid-image .note-button').tooltip();
-      holder.find('.grid-image .note-button').click(function clickHideTooltip() {
+      holder.find('.grid-image .note-button').on('click', function clickHideTooltip() {
         $("[data-toggle='tooltip']").tooltip('hide');
       });
     }
@@ -274,11 +274,11 @@ finna.layout = (function finnaLayout() {
       })
       .tooltip({trigger: 'click', viewport: '.container'});
     // prevent link opening if tooltip is placed inside link element
-    holder.find('[data-toggle="tooltip"] > i').click(function onClickTooltip(event) {
+    holder.find('[data-toggle="tooltip"] > i').on('click', function onClickTooltip(event) {
       event.preventDefault();
     });
     // close tooltip if user clicks anything else than tooltip button
-    $('html').click(function onClickHtml(e) {
+    $('html').on('click', function onClickHtml(e) {
       if (typeof $(e.target).parent().data('original-title') == 'undefined' && typeof $(e.target).data('original-title') == 'undefined') {
         $('[data-toggle="tooltip"]').tooltip('hide');
         currentOpenTooltips = [];
@@ -434,7 +434,7 @@ finna.layout = (function finnaLayout() {
 
   function initAutoScrollTouch() {
     if (!navigator.userAgent.match(/iemobile/i) && isTouchDevice() && $(window).width() < 1025) {
-      $('.search-query').click(function onClickSearchQuery() {
+      $('.search-query').on('click', function onClickSearchQuery() {
         $('html, body').animate({
           scrollTop: $(this).offset().top - 75
         }, 200);
@@ -555,7 +555,7 @@ finna.layout = (function finnaLayout() {
       var self = $(this);
       var play = self.find('.play');
       var source = self.find('source');
-      play.click(function onPlay() {
+      play.on('click', function onPlay() {
         self.find('.audio-player-wrapper').removeClass('hide');
         var audio = self.find('audio');
         audio.removeClass('hide');
@@ -655,7 +655,7 @@ finna.layout = (function finnaLayout() {
       }
     });
 
-    $('.filters-toggle').click(function filterToggleClicked() {
+    $('.filters-toggle').on('click', function filterToggleClicked() {
       var button = $(this);
       var filters = button.closest('.finna-filters').find('.filters');
 
@@ -684,7 +684,7 @@ finna.layout = (function finnaLayout() {
   function initCookieConsent() {
     var state = finna.common.getCookie('cookieConsent');
     if ('undefined' === typeof state || !state) {
-      $('.cookie-consent-dismiss').click(function dismiss() {
+      $('.cookie-consent-dismiss').on('click', function dismiss() {
         finna.common.setCookie('cookieConsent', 1, { expires: 365 });
         $('.cookie-consent').addClass('hidden');
       });
@@ -725,7 +725,7 @@ finna.layout = (function finnaLayout() {
 
   function initLoginTabs() {
     // Tabs
-    $('.login-tabs .nav-tabs a').click(function recordTabsClick() {
+    $('.login-tabs .nav-tabs a').on('click', function recordTabsClick() {
       if (!$(this).closest('li').hasClass('active')) {
         _activateLoginTab(this.className);
       }
@@ -733,7 +733,7 @@ finna.layout = (function finnaLayout() {
     });
 
     // Accordion
-    $('.login-accordion .accordion-toggle').click(function accordionClicked() {
+    $('.login-accordion .accordion-toggle').on('click', function accordionClicked() {
       _activateLoginTab($(this).find('a').data('tab'));
     });
     // Call activation to position the initial content properly

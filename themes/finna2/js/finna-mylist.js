@@ -86,7 +86,7 @@ finna.myList = (function finnaMyList() {
   ];
 
   function initDetailsElements() {
-    $('.favorite-list-details').click(function onDetailsClick() {
+    $('.favorite-list-details').on('click', function onDetailsClick() {
       if ($(this).attr('open') === 'open') {
         $(this).attr('open', false);
       } else {
@@ -421,7 +421,7 @@ finna.myList = (function finnaMyList() {
   }
 
   function initEditableMarkdownField(element, callback) {
-    element.find('[data-markdown], .js-edit').unbind('click').click(function onClickEditable(e) {
+    element.find('[data-markdown], .js-edit').unbind('click').on('click', function onClickEditable(e) {
       if (save) {
         // Do not open the editor when save is in progress.
         return;
@@ -517,7 +517,7 @@ finna.myList = (function finnaMyList() {
       });
       $('.CodeMirror-code').focus();
       // Prevent clicks within the editor area from bubbling up and closing the editor.
-      element.closest('.markdown').unbind('click').click(function onClickEditor() {
+      element.closest('.markdown').unbind('click').on('click', function onClickEditor() {
         return false;
       });
     });
@@ -560,7 +560,7 @@ finna.myList = (function finnaMyList() {
 
       // delete list
       var active = $('.mylist-bar').find('a.active');
-      active.find('.remove').unbind('click').click(function onClickRemove(e) {
+      active.find('.remove').unbind('click').on('click', function onClickRemove(e) {
         var target = $(this);
         var form = $('.delete-list');
         var prompt = form.find('.dropdown-menu');
@@ -579,11 +579,11 @@ finna.myList = (function finnaMyList() {
           $(window).resize(repositionPrompt);
         }
 
-        prompt.find('.confirm').unbind('click').click(function onClickConfirm(ev) {
+        prompt.find('.confirm').unbind('click').on('click', function onClickConfirm(ev) {
           form.submit();
           ev.preventDefault();
         });
-        prompt.find('.cancel').unbind('click').click(function onClickCancel(ev) {
+        prompt.find('.cancel').unbind('click').on('click', function onClickCancel(ev) {
           $(window).off('resize', repositionPrompt);
           prompt.hide();
           $('.remove-favorite-list').focus();
@@ -653,7 +653,7 @@ finna.myList = (function finnaMyList() {
       $(this).data('inited', '1');
       var noteButton = $(this).closest('.grid-body').find('.note-button');
       var noteOverlay = $(this).closest('.grid-body').find('.note-overlay');
-      noteButton.click(function onClick() {
+      noteButton.on('click', function onClick() {
         adjustNoteOverlaySize(noteOverlay);
         if (!noteOverlay.hasClass('note-show')) {
           noteButton.addClass('note-show');

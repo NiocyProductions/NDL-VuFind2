@@ -141,7 +141,7 @@ finna.organisationInfoPage = (function finnaOrganisationInfoPage() {
     map.draw(organisationList, defaultId);
 
     // Expand map
-    holder.find('.expand-map').click(function onClickExpandMap() {
+    holder.find('.expand-map').on('click', function onClickExpandMap() {
       mapHolder.toggleClass('expand', true);
       map.resize();
       $(this).hide();
@@ -557,7 +557,7 @@ finna.organisationInfoPage = (function finnaOrganisationInfoPage() {
       tooltip.css({'margin-left': -(tooltip.outerWidth()) / 2 + 20}).show();
     });
 
-    holder.find('.map-control-buttons .show-map').click(function onClickShowMap() {
+    holder.find('.map-control-buttons .show-map').on('click', function onClickShowMap() {
       mapHolder = $('.office.map-ui.map');
       if (mapHolder.hasClass('hidden')) {
         mapHolder.removeClass('hidden');
@@ -580,7 +580,7 @@ finna.organisationInfoPage = (function finnaOrganisationInfoPage() {
       return false;
     });
 
-    holder.find('.map-control-buttons .show-service-point').click(function onClickShowServicePoint() {
+    holder.find('.map-control-buttons .show-service-point').on('click', function onClickShowServicePoint() {
       var id = getOrganisationFromURL();
       if (id in organisationList) {
         var data = organisationList[id];
@@ -592,7 +592,7 @@ finna.organisationInfoPage = (function finnaOrganisationInfoPage() {
       return false;
     });
 
-    holder.find('.map-control-buttons .show-all').click(function onClickShowAll() {
+    holder.find('.map-control-buttons .show-all').on('click', function onClickShowAll() {
       mapHolder = $('.office.map-ui.map');
       if (mapHolder.hasClass('hidden')) {
         mapHolder.removeClass('hidden');
