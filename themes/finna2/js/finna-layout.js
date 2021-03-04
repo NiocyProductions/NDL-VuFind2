@@ -357,8 +357,8 @@ finna.layout = (function finnaLayout() {
 
   function initJumpMenus(_holder) {
     var holder = typeof _holder === 'undefined' ? $('body') : _holder;
-    holder.find('select.jumpMenu').unbind('change').on('change', function onChangeJumpMenu() { $(this).closest('form').submit(); });
-    holder.find('select.jumpMenuUrl').unbind('change').on('change', function onChangeJumpMenuUrl(e) { window.location.href = $(e.target).val(); });
+    holder.find('select.jumpMenu').off('change').on('change', function onChangeJumpMenu() { $(this).closest('form').submit(); });
+    holder.find('select.jumpMenuUrl').off('change').on('change', function onChangeJumpMenuUrl(e) { window.location.href = $(e.target).val(); });
   }
 
   function initSecondaryLoginField() {
