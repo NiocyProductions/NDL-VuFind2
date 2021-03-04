@@ -565,9 +565,9 @@ finna.myList = (function finnaMyList() {
         var form = $('.delete-list');
         var prompt = form.find('.dropdown-menu');
 
-        function repositionPrompt() {
+        function repositionPrompt(ev, data) {
           var pos = target.offset();
-          var left = $(window).width() / 2 - prompt.width() / 2;
+          var left = data.w / 2 - prompt.width() / 2;
 
           prompt.css({
             'left': left,
@@ -576,7 +576,7 @@ finna.myList = (function finnaMyList() {
         }
 
         function initRepositionListener() {
-          $(window).resize(repositionPrompt);
+          $(window).on('customresize.finna', repositionPrompt);
         }
 
         prompt.find('.confirm').unbind('click').on('click', function onClickConfirm(ev) {
@@ -584,7 +584,7 @@ finna.myList = (function finnaMyList() {
           ev.preventDefault();
         });
         prompt.find('.cancel').unbind('click').on('click', function onClickCancel(ev) {
-          $(window).off('resize', repositionPrompt);
+          $(window).off('customresize.finna', repositionPrompt);
           prompt.hide();
           $('.remove-favorite-list').focus();
           ev.preventDefault();

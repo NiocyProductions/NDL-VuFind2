@@ -477,7 +477,7 @@ finna.dateRangeVis = (function finnaDateRangeVis() {
   }
 
   function initResizeListener() {
-    $(window).on('resize', function onResizeScreen() {
+    $(window).on('customresize.finna', function onResizeScreen() {
       plotData();
     });
   }
