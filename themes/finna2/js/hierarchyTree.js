@@ -151,7 +151,7 @@ $(document).ready(function hierarchyTreeReady() {
       $('#modal .back-to-up').addClass('hidden');
     }
   });
-  $('.back-to-up').on('click', function onClickBackToUp() {
+  $(document).on('click', '.back-to-up', function onClickBackToUp() {
     $('#hierarchyTree, #modal').animate({scrollTop: 0 }, 200);
   });
 
@@ -167,7 +167,7 @@ $(document).ready(function hierarchyTreeReady() {
   $("#hierarchyLoading").removeClass('hide');
 
   $("#hierarchyTree")
-    .bind("ready.jstree", function jsTreeReady(/*event, data*/) {
+    .on("ready.jstree", function jsTreeReady(/*event, data*/) {
       $("#hierarchyLoading").addClass('hide');
       var tree = $("#hierarchyTree").jstree(true);
       tree.select_node(htmlID);
@@ -182,7 +182,7 @@ $(document).ready(function hierarchyTreeReady() {
         $('html, body').animate({scrollTop: $('#hierarchyTreeHolder').offset().top - 70}, 200);
       });
 
-      $("#hierarchyTree").bind('select_node.jstree', function jsTreeSelect(e, resp) {
+      $("#hierarchyTree").on('select_node.jstree', function jsTreeSelect(e, resp) {
         if (hierarchyContext === "Record") {
           window.location.href = resp.node.a_attr.href;
         } else {

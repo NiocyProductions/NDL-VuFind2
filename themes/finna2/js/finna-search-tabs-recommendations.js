@@ -15,11 +15,10 @@ finna.searchTabsRecommendations = (function finnaSearchTabsRecommendations() {
       .done(function getRecommendationsDone(response) {
         var container = $('#search-tabs-recommendations-holder');
         container.html(response.data.html);
-        finna.layout.initTruncate(container);
+        finna.layout.truncateFields(container);
         finna.openUrl.initLinks();
         VuFind.lightbox.bind(container);
         VuFind.itemStatuses.check(container);
-        finna.itemStatus.initDedupRecordSelection(container);
         checkSaveStatuses(container);
       });
   }

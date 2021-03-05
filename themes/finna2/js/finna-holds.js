@@ -47,8 +47,7 @@ finna.changeHolds = (function finnaChangeHolds() {
         });
     }
 
-    var changeHolds = $('.changeHolds');
-    changeHolds.on('click', function onClickChangeHolds() {
+    $(document).on('click', '.changeHolds', function onClickChangeHolds() {
       var hold = $(this);
       $('.hold-change-success').remove();
       $('.hold-change-error').remove();
@@ -91,7 +90,7 @@ finna.changeHolds = (function finnaChangeHolds() {
           })
           .fail(function onPickupLocationsDone() {
             spinnerLoad.addClass('hidden');
-            changeHolds.append(errorOccured);
+            hold.append(errorOccured);
             pickupLocations.data('populated', 0);
           });
       }
@@ -131,7 +130,7 @@ finna.changeHolds = (function finnaChangeHolds() {
         });
     }
 
-    $('.hold-status-freeze').on('click', function onClickHoldFreeze() {
+    $(document).on('click', '.hold-status-freeze', function onClickHoldFreeze() {
       var container = $(this).closest('.change-hold-status');
       var requestId = container.data('requestId');
       var recordId = container.data('recordId');
@@ -140,7 +139,7 @@ finna.changeHolds = (function finnaChangeHolds() {
       return false;
     });
 
-    $('.hold-status-release').on('click', function onClickHoldRelease() {
+    $(document).on('click', '.hold-status-release', function onClickHoldRelease() {
       var container = $(this).closest('.change-hold-status');
       var requestId = container.data('requestId');
       var recordId = container.data('recordId');

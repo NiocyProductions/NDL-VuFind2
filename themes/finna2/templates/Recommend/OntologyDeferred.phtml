@@ -5,7 +5,7 @@
   $loadJs = 'var url = VuFind.path + "/AJAX/Recommend?' . $this->recommend->getUrlParams() . '";'
     . "var deferred = \$('#ontology-recommendations-deferred');"
     . "deferred.load(url, function() {"
-    . "finna.layout.initTruncate(deferred);"
+    . "finna.layout.truncateFields(deferred);"
     . "});"
 ?>
 <div id="ontology-recommendations-deferred">

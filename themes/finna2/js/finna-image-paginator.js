@@ -533,7 +533,7 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
     if (license.length && !license.hasClass('truncated')) {
       license.addClass("truncate-field");
       license.removeClass('truncate-done');
-      finna.layout.initTruncate(details);
+      finna.layout.truncateFields(details);
     }
   }
   _.imageDetail.html(imagePopup.data('description'));
@@ -644,7 +644,7 @@ FinnaPaginator.prototype.loadImageInformation = function loadImageInformation() 
     if (_.settings.recordType === 'marc') {
       _.loadBookDescription();
     } else {
-      finna.layout.initTruncate(_.popup.collapseArea);
+      finna.layout.truncateFields(_.popup.collapseArea);
       $('.imagepopup-holder .summary').removeClass('loading');
     }
     VuFind.lightbox.bind('.imagepopup-holder');
@@ -723,7 +723,7 @@ FinnaPaginator.prototype.loadBookDescription = function loadBookDescription() {
       var data = response.data.html;
       if (data.length > 0) {
         _.popup.summary.find('> div p').html(data);
-        finna.layout.initTruncate(_.popup.summary);
+        finna.layout.truncateFields(_.popup.summary);
       }
       _.popup.summary.removeClass('loading');
     })

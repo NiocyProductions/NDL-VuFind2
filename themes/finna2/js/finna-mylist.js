@@ -86,12 +86,8 @@ finna.myList = (function finnaMyList() {
   ];
 
   function initDetailsElements() {
-    $('.favorite-list-details').on('click', function onDetailsClick() {
-      if ($(this).attr('open') === 'open') {
-        $(this).attr('open', false);
-      } else {
-        $(this).attr('open', 'open');
-      }
+    $(document).on('click', '.favorite-list-details', function onDetailsClick() {
+      $(this).attr('open', $(this).attr('open') === 'open');
     });
   }
 
@@ -478,7 +474,7 @@ finna.myList = (function finnaMyList() {
         .html($('<div/>').addClass('data').html(html));
       $('<div/>').addClass('preview').text(VuFind.translate('preview').toUpperCase()).prependTo(preview);
       preview.appendTo(element);
-      finna.layout.initTruncate(preview);
+      finna.layout.truncateFields(preview);
       initDetailsElements();
 
       editor.codemirror.on('change', function onChangeEditor() {
@@ -492,7 +488,7 @@ finna.myList = (function finnaMyList() {
         }
         result = handleTruncateField(result);
         preview.find('.data').html(result);
-        finna.layout.initTruncate(preview);
+        finna.layout.truncateFields(preview);
         initDetailsElements();
       });
 
@@ -510,7 +506,7 @@ finna.myList = (function finnaMyList() {
         container.data('empty', markdown.length === 0 ? '1' : '0');
         resultHtml = handleTruncateField(resultHtml);
         container.html(resultHtml);
-        finna.layout.initTruncate(container);
+        finna.layout.truncateFields(container);
         preview.remove();
 
         callback(markdown);
@@ -534,9 +530,6 @@ finna.myList = (function finnaMyList() {
       });
       updateBulkActionsToolbar();
     }
-
-    //Init mobile navigation collapse after list has been reloaded
-    finna.layout.initMobileNarrowSearch();
 
     // Checkbox select all
     $('.mylist-controls-bar .checkbox-select-all').off('change').change(function onChangeSelectAll() {

@@ -15,7 +15,7 @@ finna.authority = (function finnaAuthority() {
 
     if (!collapsed && !recordSummary.hasClass('truncate-field')) {
       recordSummary.addClass('truncate-field');
-      finna.layout.initTruncate(authoritybox);
+      finna.layout.truncateFields(authoritybox);
     }
 
     tabs.toggleClass('collapsed', mode);
@@ -25,7 +25,7 @@ finna.authority = (function finnaAuthority() {
 
   function initAuthorityRecommendTabs()
   {
-    $('div.authority-recommend .nav-tabs li').not('.toggle').on('click', function onTabClick() {
+    $(document).on('click', 'div.authority-recommend .nav-tabs li:not(.toggle)', function onTabClick() {
       var self = $(this);
       var id = self.data('id');
       var parent = self.closest('.authority-recommend');
@@ -54,7 +54,7 @@ finna.authority = (function finnaAuthority() {
           authoritybox.html(typeof response.data.html !== 'undefined' ? response.data.html : '--');
           toggleAuthorityInfoCollapse(false);
           if (!authoritybox.hasClass('hide')) {
-            finna.layout.initTruncate(authoritybox);
+            finna.layout.truncateFields(authoritybox);
           }
           spinner.hide();
         })
@@ -64,7 +64,7 @@ finna.authority = (function finnaAuthority() {
           toggleAuthorityInfoCollapse(false);
         });
     });
-    $('div.authority-recommend .nav-tabs li.toggle').on('click', function onToggle() {
+    $(document).on('click', 'div.authority-recommend .nav-tabs li.toggle', function onToggle() {
       toggleAuthorityInfoCollapse();
     });
   }

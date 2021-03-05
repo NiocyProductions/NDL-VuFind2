@@ -242,16 +242,6 @@ finna.feed = (function finnaFeed() {
         if (holder.find('.grid-item.truncate').length > 0) {
           holder.find('.show-more-feeds').removeClass('hidden');
         }
-        holder.find('.show-more-feeds').on('click', function moreFeedsButton() {
-          holder.find('.grid-item.truncate').removeClass('hidden');
-          holder.find('.show-less-feeds').removeClass('hidden');
-          $(this).addClass('hidden');
-        });
-        holder.find('.show-less-feeds').on('click', function lessFeedsButton() {
-          holder.find('.grid-item.truncate').addClass('hidden');
-          holder.find('.show-more-feeds').removeClass('hidden');
-          $(this).addClass('hidden');
-        });
         var feedGrid = holder.find('.feed-grid:not(.news-feed .feed-grid, .events-feed .feed-grid)');
         if (feedGrid.width() <= 500) {
           feedGrid.find('.grid-item').css('flex-basis', '100%');
@@ -302,10 +292,26 @@ finna.feed = (function finnaFeed() {
     });
   }
 
+  function initClickEvents() {
+    $(document).on('click', '.show-more-feeds', function moreFeedsButton() {
+      var holder = $(this).closest('feed-container');
+      holder.find('.grid-item.truncate').removeClass('hidden');
+      holder.find('.show-less-feeds').removeClass('hidden');
+      $(this).addClass('hidden');
+    });
+    $(document).on('click', '.show-less-feeds', function lessFeedsButton() {
+      var holder = $(this).closest('feed-container');
+      holder.find('.grid-item.truncate').addClass('hidden');
+      holder.find('.show-more-feeds').removeClass('hidden');
+      $(this).addClass('hidden');
+    });
+  }
+
   var my = {
     loadFeed: loadFeed,
     loadFeedFromUrl: loadFeedFromUrl,
     init: function init() {
+      initClickEvents();
       initComponents();
     }
   };

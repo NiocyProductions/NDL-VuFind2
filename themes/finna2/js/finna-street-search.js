@@ -107,7 +107,7 @@ finna.StreetSearch = (function finnaStreetSearch() {
 
   function initStreetHeader(){
     progressContainer = $('.street-search-progress');
-    $('.update-location').on('click', function updateStreetSearchLocation(e){
+    $(document).on('click', '.update-location', function updateStreetSearchLocation(e){
       e.preventDefault();
       doStreetSearch();
     });

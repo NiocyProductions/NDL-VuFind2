@@ -312,12 +312,6 @@ finna.dateRangeVis = (function finnaDateRangeVis() {
 
   function initForm(form, backend, _facetField) {
     facetField = _facetField;
-    form.find('a.submit').on('click',
-      function onFormSubmitClick() {
-        $(this).closest('form').submit();
-        return false;
-      }
-    );
 
     var fromElement = form.find('.year-from');
     var toElement = form.find('.year-to');
@@ -482,7 +476,15 @@ finna.dateRangeVis = (function finnaDateRangeVis() {
     });
   }
 
+  function initClickEvents() {
+    $(document).on('click', '.year-form a.submit', function onFormSubmitClick() {
+      $(this).closest('form').submit();
+      return false;
+    });
+  }
+
   function init() {
+    initClickEvents();
     initResizeListener();
     initFacetBar();
   }

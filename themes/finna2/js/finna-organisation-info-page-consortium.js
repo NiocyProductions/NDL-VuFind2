@@ -181,7 +181,7 @@ finna.organisationInfoPageConsortium = (function organisationInfoPageConsortium(
 
     if (list) {
       listHolder.addClass('truncate-field');
-      finna.layout.initTruncate(listHolder.parent());
+      finna.layout.truncateFields(listHolder.parent());
     }
   }
 
@@ -192,6 +192,7 @@ finna.organisationInfoPageConsortium = (function organisationInfoPageConsortium(
 
       var sections = holder.find('.navi-section');
       holder.find('.consortium-navigation-list .scroll').each(function initConsortiumNaviScroll(ind) {
+        console.log('2ewsres');
         $(this).on('click', function onClickConsortiumNavi() {
           $('html, body').animate({
             scrollTop: $(sections[ind]).offset().top - 45

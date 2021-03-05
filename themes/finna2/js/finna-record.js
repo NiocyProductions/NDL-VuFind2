@@ -16,7 +16,7 @@ finna.record = (function finnaRecord() {
             description.find('a').attr('target', '_blank');
 
             description.wrapInner('<div class="truncate-field wide"><p class="summary"></p></div>');
-            finna.layout.initTruncate(description);
+            finna.layout.truncateFields(description);
             if (!$('.hide-details-button').hasClass('hidden')) {
               $('.record-information .description').addClass('too-long');
               $('.record-information .description .more-link.wide').click();
@@ -32,14 +32,14 @@ finna.record = (function finnaRecord() {
   }
 
   function initHideDetails() {
-    $('.show-details-button').on('click', function onClickShowDetailsButton() {
+    $(document).on('click', '.show-details-button', function onClickShowDetailsButton() {
       $('.record-information .record-details-more').removeClass('hidden');
       $(this).addClass('hidden');
       $('.hide-details-button').removeClass('hidden');
       $('.record .description .more-link.wide').click();
       sessionStorage.setItem('finna_record_details', '1');
     });
-    $('.hide-details-button').click (function onClickHideDetailsButton() {
+    $(document).on('click', '.hide-details-button', function onClickHideDetailsButton() {
       $('.record-information .record-details-more').addClass('hidden');
       $(this).addClass('hidden');
       $('.show-details-button').removeClass('hidden');
@@ -129,12 +129,7 @@ finna.record = (function finnaRecord() {
           checkRequestsAreValid($group.find('.expandedCheckStorageRetrievalRequest').removeClass('expandedCheckStorageRetrievalRequest'), 'StorageRetrievalRequest');
           checkRequestsAreValid($group.find('.expandedCheckILLRequest').removeClass('expandedCheckILLRequest'), 'ILLRequest');
           VuFind.lightbox.bind($itemsContainer);
-          $group.find('.load-more-items-ajax').on('click', function loadMore() {
-            var $elem = $(this);
-            $elem.addClass('hidden');
-            $elem.siblings('.load-more-indicator-ajax').removeClass('hidden');
-            fetchHoldingsDetails($elem.parent());
-          });
+
         })
         .fail(function onGetDetailsFail() {
           $(element).text(VuFind.translate('error_occurred'));
@@ -150,7 +145,7 @@ finna.record = (function finnaRecord() {
   }
 
   function initHoldingsControls() {
-    $('.holdings-container-heading').on('click', function onClickHeading(e) {
+    $(document).on('click', '.holdings-container-heading', function onClickHeading(e) {
       if ($(e.target).hasClass('location-service') || $(e.target).parents().hasClass('location-service')) {
         return;
       }
@@ -168,6 +163,12 @@ finna.record = (function finnaRecord() {
         checkRequestsAreValid(rows.find('.collapsedCheckILLRequest').removeClass('collapsedCheckILLRequest'), 'ILLRequest', 'ILLRequestBlocked');
         fetchHoldingsDetails(rows.filter('.collapsedGetDetails').removeClass('collapsedGetDetails'));
       }
+    });
+    $(document).on('click', '.load-more-items-ajax', function loadMore() {
+      var $elem = $(this);
+      $elem.addClass('hidden');
+      $elem.siblings('.load-more-indicator-ajax').removeClass('hidden');
+      fetchHoldingsDetails($elem.parent());
     });
   }
 
@@ -204,13 +205,12 @@ finna.record = (function finnaRecord() {
     initHoldingsControls();
     setUpCheckRequest();
     augmentOnlineLinksFromHoldings();
-    finna.layout.initLocationService();
     finna.layout.initJumpMenus($('.holdings-tab'));
     VuFind.lightbox.bind($('.holdings-tab'));
   }
 
   function setupLocationsEad3Tab() {
-    $('.holdings-container-heading').on('click', function onClickHeading() {
+    $(document).on('click', '.holdings-container-heading', function onClickHeading() {
       $(this).nextUntil('.holdings-container-heading').toggleClass('collapsed');
       if ($('.location .fa', this).hasClass('fa-arrow-down')) {
         $('.location .fa', this).removeClass('fa-arrow-down');
@@ -234,7 +234,7 @@ finna.record = (function finnaRecord() {
 
   function initAudioAccordion() {
     $('.audio-accordion .audio-item-wrapper').first().addClass('active');
-    $('.audio-accordion .audio-title-wrapper').on('click', function audioAccordionClicker() {
+    $(document).on('click', '.audio-accordion .audio-title-wrapper', function audioAccordionClicker() {
       $('.audio-accordion .audio-item-wrapper.active').removeClass('active');
       $(this).parent().addClass('active');
     });
@@ -277,12 +277,12 @@ finna.record = (function finnaRecord() {
   }
 
   function initRecordAccordion() {
-    $('.record-accordions .accordion-toggle').on('click', function accordionClicked(e) {
+    $(document).on('click', '.record-accordions .accordion-toggle', function accordionClicked(e) {
       return _toggleAccordion($(e.target).closest('.accordion'));
     });
     if ($('.mobile-toolbar').length > 0 && $('.accordion-holdings').length > 0) {
       $('.mobile-toolbar .library-link li').removeClass('hidden');
-      $('.mobile-toolbar .library-link li').on('click', function onLinkClick(e) {
+      $(document).on('click', '.mobile-toolbar .library-link li', function onLinkClick(e) {
         e.stopPropagation();
         $('html, body').animate({scrollTop: $('#tabnav').offset().top - accordionTitleHeight}, 150);
         _toggleAccordion($('.accordion-holdings'));

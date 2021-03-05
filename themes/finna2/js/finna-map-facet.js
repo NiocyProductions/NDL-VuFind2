@@ -119,16 +119,17 @@ finna.MapFacet = (function finnaStreetMap() {
   }
 
   function initMapFacet(_options){
-    progressContainer = $('.location-search-info');
-    $(".user-location-filter").on('click', function onLocationFilterClick(e){
+    $(document).on('click', '.user-location-filter', function onLocationFilterClick(e){
       e.preventDefault();
+      progressContainer = $('.location-search-info');
       progressContainer.find('.fa-spinner').removeClass('hidden');
       progressContainer.find('.info').empty();
       progressContainer.removeClass('hidden');
       navigator.geolocation.getCurrentPosition(locationSearch, geoLocationError, { timeout: 30000, maximumAge: 10000 });
     });
 
-    $('.close-info').on('click', function onCloseInfoClick(){
+    $(document).on('click', '.close-info', function onCloseInfoClick(){
+      progressContainer = $('.location-search-info');
       progressContainer.addClass('hidden');
     });
 

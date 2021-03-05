@@ -43,14 +43,12 @@ finna.userListEmbed = (function userListEmbed() {
               });
 
               finna.myList.init();
-              finna.layout.initCondensedList(resultsContainer);
-              finna.layout.initTruncate();
+              finna.layout.truncateFields();
               finna.layout.initImagePaginators();
               finna.openUrl.initLinks(resultsContainer);
               finna.videoPopup.initIframeEmbed(resultsContainer);
               finna.videoPopup.initVideoPopup(resultsContainer);
               VuFind.itemStatuses.check(resultsContainer);
-              finna.itemStatus.initDedupRecordSelection(resultsContainer);
               VuFind.recordVersions.init(resultsContainer);
               VuFind.lightbox.bind(resultsContainer);
               VuFind.cart.init(resultsContainer);

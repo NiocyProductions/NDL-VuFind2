@@ -1,14 +1,13 @@
 /*global VuFind, finna */
 finna.itemStatus = (function finnaItemStatus() {
-  function initDedupRecordSelection(_holder) {
-    var holder = typeof _holder === 'undefined' ? $(document) : _holder;
-
-    holder.find('.dedup-select').on('change', function onChangeDedupSelection() {
-      var id = $(this).val();
-      var source = $(this).find('option:selected').data('source');
+  function init() {
+    $(document).on('change', '.dedup-select', function onChangeDedupSelection() {
+      var select = $(this);
+      var id = select.val();
+      var source = select.find('option:selected').data('source');
       finna.common.setCookie('preferredRecordSource', source);
 
-      var recordContainer = $(this).closest('.record-container');
+      var recordContainer = select.closest('.record-container');
       recordContainer.data('ajaxAvailabilityDone', 0);
       var oldRecordId = recordContainer.find('.hiddenId')[0].value;
 
@@ -17,13 +16,14 @@ finna.itemStatus = (function finnaItemStatus() {
 
       // Update IDs of elements
       recordContainer.find('[id="' + oldRecordId + '"]').each(function updateElemId() {
-        $(this).attr('id', id);
+        select.attr('id', id);
       });
 
       // Update links as well
       recordContainer.find('a').each(function updateLinks() {
-        if (typeof $(this).attr('href') !== 'undefined') {
-          $(this).attr('href', $(this).attr('href').replace(oldRecordId, id));
+        var btn = select;
+        if (typeof btn.attr('href') !== 'undefined') {
+          btn.attr('href', btn.attr('href').replace(oldRecordId, id));
         }
       });
 
@@ -42,12 +42,7 @@ finna.itemStatus = (function finnaItemStatus() {
   }
 
   var my = {
-    initDedupRecordSelection: initDedupRecordSelection,
-    init: function init() {
-      if (!$('.results').hasClass('result-view-condensed')) {
-        initDedupRecordSelection();
-      }
-    }
+    init: init
   };
 
   return my;
