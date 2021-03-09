@@ -500,7 +500,6 @@ FinnaPaginator.prototype.changeTriggerImage = function changeTriggerImage(imageP
     $(image).css('opacity', '');
     _.setDimensions();
     if (image.naturalWidth && image.naturalWidth === 10 && image.naturalHeight === 10) {
-      console.log("why");
       _.trigger.addClass('no-image').trigger('removeclick');
       $(image).attr('alt', '');
       if (_.settings.isList) {
